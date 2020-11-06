@@ -40,29 +40,26 @@ class SearchProblem:
     def __init__(self, domain, initial, goal):
         self.domain = domain
         self.initial = initial      # dicionario keeper_position e #caixas
-        # self.initial_boxes = boxes  
         self.goal = goal            #diamonds position
     def goal_test(self, state):     #state -- posiçao das caixas
-        return self.domain.satisfies(state,self.goal)
+        return self.domain.satisfies(state['boxes'],self.goal)
 
 class SearchNode:
 
 ###########################################################################
 
-    # depth_count = 0
+    depth_count = 0
 
 ###########################################################################
 
 
     def __init__(self, state, parent, depth): 
-        # self.state_keeper = state_keeper
-        # self.state_boxes = state_boxes
         self.state = state
         self.parent = parent
         self.depth = depth
-        # if SearchNode.depth_count < depth:
-        #     SearchNode.depth_count = depth
-        #     print("Omg we're going deeper!!!!: ", SearchNode.depth_count)
+        if SearchNode.depth_count < depth:
+            SearchNode.depth_count = depth
+            print("Omg we're going deeper!!!!: ", SearchNode.depth_count)
         # self.cost = cost
 
     def in_parent(self, state):
@@ -79,27 +76,26 @@ class SearchNode:
 
 ###########################################################################
 
-    # def state_keeper_to_array(self, current_keeper):
-    #     if current_keeper is None:
-    #         return []
+    def state_keeper_to_array(self, current_keeper):
+        if current_keeper is None:
+            return []
+        array = self.state_keeper_to_array(current_keeper.parent)
+        array.append(current_keeper.state_keeper)
 
-    #     array = self.state_keeper_to_array(current_keeper.parent)
-    #     array.append(current_keeper.state_keeper)
+        return array
 
-    #     return array
+    def is_debug_test(self):                                                                                                                                                                     ##
+        success_array = [(2,3),(2, 4), (1, 4), (1, 3), (2, 3), (3, 3), (4, 3), (4, 4), (3, 4), (3, 3), (2, 3), (1, 3), (1, 4), (1, 5), (2, 5), (2, 4), (1, 4), (1, 3), (2, 3), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (4, 3), (3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (2, 1)]
+        state_keeper_array = self.state_keeper_to_array(self)
 
-    # def is_debug_test(self):                                                                                                                                                                     ##
-    #     success_array = [(2,3),(2, 4), (1, 4), (1, 3), (2, 3), (3, 3), (4, 3), (4, 4), (3, 4), (3, 3), (2, 3), (1, 3), (1, 4), (1, 5), (2, 5), (2, 4), (1, 4), (1, 3), (2, 3), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (4, 3), (3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (2, 1)]
-    #     state_keeper_array = self.state_keeper_to_array(self)
-
-    #     count = 0
-    #     for i in state_keeper_array:
-    #         if i == success_array[count]:
-    #             count+=1
-    #         else:
-    #             return False
-    #     print("State Keeper Array: ", state_keeper_array)
-    #     return True
+        count = 0
+        for i in state_keeper_array:
+            if i == success_array[count]:
+                count+=1
+            else:
+                return False
+        print("State Keeper Array: ", state_keeper_array)
+        return True
 
 ###########################################################################
 
@@ -151,15 +147,13 @@ class SearchTree:
         while self.open_nodes != []:
             node = self.open_nodes.pop(0)
             self.non_terminals += 1
-            if self.problem.goal_test(node.state['boxes']):
+            if self.problem.goal_test(node.state):
                 self.solution = node
                 self.terminals = len(self.open_nodes)
                 return self.get_path(node)
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
-                # newstate_keeper = newstate[0]
-                # newstate_boxes = newstate[1]
                 newnode = SearchNode(newstate, node, node.depth + 1)
                 
                 # if newnode.is_debug_test():

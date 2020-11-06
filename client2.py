@@ -6,9 +6,9 @@ import os
 import websockets
 from mapa import Map
 from consts import Tiles
-from student import *
+from srAgente import *
 from tree_search import *
-
+import time
 # Next 4 lines are not needed for AI agents, please remove them from your code!
 import pygame
 
@@ -16,6 +16,22 @@ pygame.init()
 program_icon = pygame.image.load("data/icon2.png")
 pygame.display.set_icon(program_icon)
 
+def get_keys(steps):
+    if len(steps) <= 1:
+        return []
+    
+    step = (steps[1][0] - steps[0][0], steps[1][1] - steps[0][1])
+    
+    print(step)
+    if step == (1,0):
+        key = 'd'
+    elif step == (0,1):
+        key = 's'
+    elif step == (-1,0):
+        key = 'a'
+    else:
+        key = 'w'
+    return [key] + get_keys(steps[1:])
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
@@ -58,7 +74,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
         print("Resultado:")
         print(t.search())
-
+        res = t.get_path(t.solution)
+        keys = get_keys(res)
+        print(keys)
 
         # Next 3 lines are not needed for AI agent
         SCREEN = pygame.display.set_mode((299, 123))
@@ -73,110 +91,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game state, this must be called timely or your game will get out of sync with the server
 
-                # Next lines are only for the Human Agent, the key values are nonetheless the correct ones!
-                # if count2 > 33 :
-                #     pygame.quit()
-                #     print("adeus")
-                # else:
-                #     if count2 == 0:   
-                #         key = "s"
-                #     if count2 == 1:
-                #         key = "a"
-                #     if count2 == 2:
-                #         key = "w"
-                #     if count2 == 3:
-                #         key = "d"
-                #     if count2 == 4:
-                #         key = "d"
-                #     if count2 == 5:
-                #         key = "d"
-                #     if count2 == 6:
-                #         key = "s"
-                #     if count2 == 7:
-                #         key = "a"
-                #     if count2 == 8:
-                #         key = "w"
-                #     if count2 == 9:
-                #         key = "a"
-                #     if count2 == 10:
-                #         key = "a"
-                #     if count2 == 11:
-                #         key = "s"
-                #     if count2 == 12:
-                #         key = "s"
-                #     if count2 == 13:
-                #         key = "d"
-                #     if count2 == 14:
-                #         key = "w"
-                #     if count2 == 15:
-                #         key = "a"
-                #     if count2 == 16:
-                #         key = "w"
-                #     if count2 == 17:
-                #         key = "d"
-                #     if count2 == 18:
-                #         key = "w"
-                #     if count2 == 19:
-                #         key = "w"
-                #     if count2 == 20:
-                #         key = "a"
-                #     if count2 == 21:
-                #         key = "s"
-                #     if count2 == 22:
-                #         key = "d"
-                #     if count2 == 23:
-                #         key = "s"
-                #     if count2 == 24:
-                #         key = "s"
-                #     if count2 == 25:
-                #         key = "d"
-                #     if count2 == 26:
-                #         key = "d"
-                #     if count2 == 27:
-                #         key = "w"
-                #     if count2 == 28:
-                #         key = "a"
-                #     if count2 == 29:
-                #         key = "s"
-                #     if count2 == 30:
-                #         key = "a"
-                #     if count2 == 31:
-                #         key = "w"
-                #     if count2 == 32:
-                #         key = "w"
-                #     if count2 == 33:
-                #         key = "w"
-                    
-                #     count2 += 1
+                for key in keys:
+                    print(key)
+                    time.sleep(0.1)
+                    await websocket.send(
+                        json.dumps({"cmd": "key", "key": key})
+                    )  # send key command to server - you must implement this send in the AI agent
 
-
-                await websocket.send(
-                    json.dumps({"cmd": "key", "key": key})
-                )  # send key command to server - you must implement this send in the AI agent
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_UP:
-                            key = "w"
-                        elif event.key == pygame.K_LEFT:
-                            key = "a"
-                        elif event.key == pygame.K_DOWN:
-                            key = "s"
-                        elif event.key == pygame.K_RIGHT:
-                            key = "d"
-
-                        elif event.key == pygame.K_d:
-                            import pprint
-
-                            pprint.pprint(state)
-                            print(Map(f"levels/{state['level']}.xsb"))
-                        await websocket.send(
-                            json.dumps({"cmd": "key", "key": key})
-                        )  # send key command to server - you must implement this send in the AI agent
-                        break
+                
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
