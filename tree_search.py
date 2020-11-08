@@ -76,26 +76,26 @@ class SearchNode:
 
 ###########################################################################
 
-    def state_keeper_to_array(self, current_keeper):
-        if current_keeper is None:
-            return []
-        array = self.state_keeper_to_array(current_keeper.parent)
-        array.append(current_keeper.state_keeper)
+    # def state_keeper_to_array(self, current_keeper):
+    #     if current_keeper is None:
+    #         return []
+    #     array = self.state_keeper_to_array(current_keeper.parent)
+    #     array.append(current_keeper.state_keeper)
 
-        return array
+    #     return array
 
-    def is_debug_test(self):                                                                                                                                                                     ##
-        success_array = [(2,3),(2, 4), (1, 4), (1, 3), (2, 3), (3, 3), (4, 3), (4, 4), (3, 4), (3, 3), (2, 3), (1, 3), (1, 4), (1, 5), (2, 5), (2, 4), (1, 4), (1, 3), (2, 3), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (4, 3), (3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (2, 1)]
-        state_keeper_array = self.state_keeper_to_array(self)
+    # def is_debug_test(self):                                                                                                                                                                     ##
+    #     success_array = [(2,3),(2, 4), (1, 4), (1, 3), (2, 3), (3, 3), (4, 3), (4, 4), (3, 4), (3, 3), (2, 3), (1, 3), (1, 4), (1, 5), (2, 5), (2, 4), (1, 4), (1, 3), (2, 3), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (4, 3), (3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (2, 1)]
+    #     state_keeper_array = self.state_keeper_to_array(self)
 
-        count = 0
-        for i in state_keeper_array:
-            if i == success_array[count]:
-                count+=1
-            else:
-                return False
-        print("State Keeper Array: ", state_keeper_array)
-        return True
+    #     count = 0
+    #     for i in state_keeper_array:
+    #         if i == success_array[count]:
+    #             count+=1
+    #         else:
+    #             return False
+    #     print("State Keeper Array: ", state_keeper_array)
+    #     return True
 
 ###########################################################################
 
@@ -142,8 +142,6 @@ class SearchTree:
 
     # procurar a solucao
     def search(self, limit=None):
-        array = [(2,3),(2, 4), (1, 4), (1, 3), (2, 3), (3, 3), (4, 3), (4, 4), (3, 4), (3, 3), (2, 3), (1, 3), (1, 4), (1, 5), (2, 5), (2, 4), (1, 4), (1, 3), (2, 3), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (4, 3), (3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (2, 1)]
-        current_depth = 0
         while self.open_nodes != []:
             node = self.open_nodes.pop(0)
             self.non_terminals += 1

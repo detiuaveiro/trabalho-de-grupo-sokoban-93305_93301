@@ -54,9 +54,6 @@ class Logic:
 
         return new_box_position
 
-    def list_boxes(self):
-        return self.mapa.filter_tiles([Tiles.BOX, Tiles.BOX_ON_GOAL, Tiles])
-
     def map_positions(self):
         return self.mapa.filter_tiles([Tiles.FLOOR, Tiles.GOAL, Tiles.MAN, Tiles.MAN_ON_GOAL, Tiles.BOX, Tiles.BOX_ON_GOAL])
 
@@ -67,7 +64,7 @@ class Logic:
         return self.mapa.filter_tiles([Tiles.WALL])
     
     def list_boxes(self):
-        return self.mapa.filter_tiles([Tiles.BOX, Tiles.BOX_ON_GOAL, Tiles])
+        return self.mapa.boxes
 
     def list_goal(self):
         return self.mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL])
