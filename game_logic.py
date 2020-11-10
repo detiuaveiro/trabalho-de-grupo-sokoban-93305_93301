@@ -14,7 +14,7 @@ class Logic:
     def __init__(self, mapa):
         self.mapa = mapa                        
         self.dead_squares = self.simple_deadlocks()
-        print("Deadlocks:",self.dead_squares)
+        # print("Deadlocks:",self.dead_squares)
     #retorna uma lista de moves
     def possible_moves(self, state):
         actlist_keeper = []

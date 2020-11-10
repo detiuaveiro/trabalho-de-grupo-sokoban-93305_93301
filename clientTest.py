@@ -16,9 +16,9 @@ my_queue = queue.Queue()
 
 def try_get_result_from_queue():
     try:
-        print("Queue size: ", my_queue.qsize())
+        # print("Queue size: ", my_queue.qsize())
         result = my_queue.get(False)
-        print("Obtained from queue: ", result)
+        # print("Obtained from queue: ", result)
         return result
     except queue.Empty:
         return None
@@ -46,15 +46,13 @@ def result(mapa):
     initial = {"keeper": mapa.keeper, "boxes": mapa.boxes}
     p = SearchProblem(agent, initial, mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL]))
     t = SearchTree(p,'breadth')
-    t.search()          #perde
+    t.search()          
     res = t.get_path(t.solution)
-    # return await get_keys(res)
     
     keys = get_keys(res)
-    print("keys: ", keys)
+    # print("keys: ", keys)
     for key in keys:
         my_queue.put(key)
-
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
@@ -67,7 +65,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 update = json.loads(
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
-                print("inicio")
+                # print("sincronizado")
                 if "map" in update:
                     # we got a new level
                     game_properties = update
@@ -80,47 +78,28 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 else:
                     # we got a current map state update
                     state = update
+                    # print("consumir")
 
                 res = None
                 if not my_queue.empty():
                     res = try_get_result_from_queue() # my_queue.get(False) 
 
                 if res != None and res != []:
-                    print(res[0])
-                    time.sleep(0.1)
+                    # print(res[0])
+                    # time.sleep(0.1)
                     await websocket.send(
                         json.dumps({"cmd": "key", "key": res[0]})
                     )  # send key command to server - you must implement this send in the AI agent
-                    print("aqui")
+                    # print("aqui")
+                else:
+                    await websocket.send(
+                        json.dumps({"cmd": "key", "key": ""})
+                    )
+                    # print("enviou nada")
 
-                if state != None:
-                    print(state)
+                # if state != None:
+                #     print(state)
 
-                # Next lines are only for the Human Agent, the key values are nonetheless the correct ones!
-                # key = ""
-                # for event in pygame.event.get():
-                #     if event.type == pygame.QUIT:
-                #         pygame.quit()
-
-                #     if event.type == pygame.KEYDOWN:
-                #         if event.key == pygame.K_UP:
-                #             key = "w"
-                #         elif event.key == pygame.K_LEFT:
-                #             key = "a"
-                #         elif event.key == pygame.K_DOWN:
-                #             key = "s"
-                #         elif event.key == pygame.K_RIGHT:
-                #             key = "d"
-
-                #         elif event.key == pygame.K_d:
-                #             import pprint
-
-                #             pprint.pprint(state)
-                #             print(Map(f"levels/{state['level']}.xsb"))
-                #         await websocket.send(
-                #             json.dumps({"cmd": "key", "key": key})
-                #         )  # send key command to server - you must implement this send in the AI agent
-                #         break
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
