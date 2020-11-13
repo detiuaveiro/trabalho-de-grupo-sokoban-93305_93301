@@ -11,27 +11,28 @@ from tree_search import *
 import time
 # Next 4 lines are not needed for AI agents, please remove them from your code!
 import pygame
+from state import *
 
 pygame.init()
 program_icon = pygame.image.load("data/icon2.png")
 pygame.display.set_icon(program_icon)
 
-def get_keys(steps):
+def get_keys(steps, witdh):
     if len(steps) <= 1:
         return []
     
-    step = (steps[1][0] - steps[0][0], steps[1][1] - steps[0][1])
+    step = steps[1] - steps[0]
     
     print(step)
-    if step == (1,0):
+    if step == 1:
         key = 'd'
-    elif step == (0,1):
+    elif step == witdh:
         key = 's'
-    elif step == (-1,0):
+    elif step == -1:
         key = 'a'
     else:
         key = 'w'
-    return [key] + get_keys(steps[1:])
+    return [key] + get_keys(steps[1:],witdh)
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
@@ -50,6 +51,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         #print(mapa._map)
         for x in mapa._map:
             print(x)
+            print(" ")
         print('1++++++++++++++++++++++++++++++++++++++')
         walls = []
         for lin in range(len(mapa._map)):
@@ -68,14 +70,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         # mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL])
         game = Logic(mapa)
         agent = Agent(game)
-        initial = {"keeper": mapa.keeper, "boxes": mapa.boxes}
-        p = SearchProblem(agent, initial, mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL]))
+        initial_state = State(game.keeper(), game.list_boxes())
+        # initial = {"keeper": mapa.keeper, "boxes": mapa.boxes}
+        p = SearchProblem(agent, initial_state, game.list_goal())
         t = SearchTree(p,'breadth')
 
         print("Resultado:")
         print(t.search())
         res = t.get_path(t.solution)
-        keys = get_keys(res)
+        keys = get_keys(res, game.width)
         print(keys)
 
         # Next 3 lines are not needed for AI agent

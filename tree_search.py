@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from state import *
 
 # Dominios de pesquisa
 # Permitem calcular
@@ -37,12 +38,15 @@ class SearchDomain(ABC):
         pass
 
 class SearchProblem:
-    def __init__(self, domain, initial, goal):
+    
+    def __init__(self, domain, initial_state, goal):
         self.domain = domain
-        self.initial = initial      # dicionario keeper_position e #caixas
-        self.goal = goal            #diamonds position
-    def goal_test(self, state):     #state -- posiçao das caixas
-        return self.domain.satisfies(state['boxes'],self.goal)
+        self.initial_state = initial_state      # class state
+        self.goal = goal                        #diamonds position
+        self.goal.sort()
+    
+    def goal_test(self, state):
+        return self.domain.satisfies(state.boxes, self.goal)
 
 class SearchNode:
 
@@ -63,9 +67,9 @@ class SearchNode:
         # self.cost = cost
 
     def in_parent(self, state):
-        self.state['boxes'].sort()
-        state['boxes'].sort()
-        if self.state['keeper'] == state['keeper'] and self.state['boxes'] == state['boxes']:
+        # self.state.boxes.sort()
+        # state.boxes.sort()
+        if self.state.keeper == state.keeper and self.state.boxes == state.boxes:
             return True
         
         if self.parent is None:
@@ -101,9 +105,10 @@ class SearchNode:
 
     def __str__(self):
         # return f"no(State Keeper: {self.state_keeper}, State Boxes: {self.state_boxes}, Depth: {self.depth}, Parent: {self.parent})"
-        return f"no(State Keeper: {self.state['keeper']}, Depth: {self.depth}, Parent: {self.parent})"
+        return f"no(State Keeper: {self.state.keeper}, Depth: {self.depth}, Parent: {self.parent})"
         #return f"no(Depth: {self.depth})"
         #return "no(" + str(self.state) + "," + str(self.parent) + ")"
+
     def __repr__(self):
         return str(self)
 
@@ -113,7 +118,7 @@ class SearchTree:
     # construtor
     def __init__(self, problem, strategy='breadth'): 
         self.problem = problem
-        root = SearchNode(problem.initial, None, 0)
+        root = SearchNode(problem.initial_state, None, 0)
         self.open_nodes = [root]
         self.strategy = strategy
         self.solution = None
@@ -123,9 +128,9 @@ class SearchTree:
     # obter o caminho (sequencia de estados) da raiz ate um no
     def get_path(self,node):
         if node.parent == None:
-            return [node.state['keeper']]
+            return [node.state.keeper]
         path = self.get_path(node.parent)
-        path += [node.state['keeper']]
+        path += [node.state.keeper]
         return(path)
     
     @property

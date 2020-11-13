@@ -23,33 +23,33 @@ def try_get_result_from_queue():
     except queue.Empty:
         return None
 
-def get_keys(steps):
+def get_keys(steps, witdh):
     if len(steps) <= 1:
         return []
     
-    step = (steps[1][0] - steps[0][0], steps[1][1] - steps[0][1])
+    step = steps[1] - steps[0]
     
     print(step)
-    if step == (1,0):
+    if step == 1:
         key = 'd'
-    elif step == (0,1):
+    elif step == witdh:
         key = 's'
-    elif step == (-1,0):
+    elif step == -1:
         key = 'a'
     else:
         key = 'w'
-    return [key] + get_keys(steps[1:])
+    return [key] + get_keys(steps[1:],witdh)
 
 def result(mapa):
     game = Logic(mapa)
     agent = Agent(game)
-    initial = {"keeper": mapa.keeper, "boxes": mapa.boxes}
-    p = SearchProblem(agent, initial, mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL]))
+    initial_state = State(game.keeper(), game.list_boxes())
+    p = SearchProblem(agent, initial_state, game.list_goal())
     t = SearchTree(p,'breadth')
     t.search()          
     res = t.get_path(t.solution)
     
-    keys = get_keys(res)
+    keys = get_keys(res, game.width)
     # print("keys: ", keys)
     for key in keys:
         my_queue.put(key)
