@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from state import *
+import asyncio
 
 # Dominios de pesquisa
 # Permitem calcular
@@ -67,8 +68,7 @@ class SearchNode:
         # self.cost = cost
 
     def in_parent(self, state):
-        # self.state.boxes.sort()
-        # state.boxes.sort()
+        
         if self.state.keeper == state.keeper and self.state.boxes == state.boxes:
             return True
         
@@ -76,32 +76,6 @@ class SearchNode:
             return False
 
         return self.parent.in_parent(state)
-
-
-###########################################################################
-
-    # def state_keeper_to_array(self, current_keeper):
-    #     if current_keeper is None:
-    #         return []
-    #     array = self.state_keeper_to_array(current_keeper.parent)
-    #     array.append(current_keeper.state_keeper)
-
-    #     return array
-
-    # def is_debug_test(self):                                                                                                                                                                     ##
-    #     success_array = [(2,3),(2, 4), (1, 4), (1, 3), (2, 3), (3, 3), (4, 3), (4, 4), (3, 4), (3, 3), (2, 3), (1, 3), (1, 4), (1, 5), (2, 5), (2, 4), (1, 4), (1, 3), (2, 3), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (2, 3), (2, 4), (3, 4), (4, 4), (4, 3), (3, 3), (3, 4), (2, 4), (2, 3), (2, 2), (2, 1)]
-    #     state_keeper_array = self.state_keeper_to_array(self)
-
-    #     count = 0
-    #     for i in state_keeper_array:
-    #         if i == success_array[count]:
-    #             count+=1
-    #         else:
-    #             return False
-    #     print("State Keeper Array: ", state_keeper_array)
-    #     return True
-
-###########################################################################
 
     def __str__(self):
         # return f"no(State Keeper: {self.state_keeper}, State Boxes: {self.state_boxes}, Depth: {self.depth}, Parent: {self.parent})"
@@ -122,8 +96,6 @@ class SearchTree:
         self.open_nodes = [root]
         self.strategy = strategy
         self.solution = None
-        self.terminals = 1
-        self.non_terminals = 0
 
     # obter o caminho (sequencia de estados) da raiz ate um no
     def get_path(self,node):
@@ -137,31 +109,22 @@ class SearchTree:
     def length(self):
         return self.solution.depth
 
-    @property
-    def avg_ramification(self):
-        return (self.terminals + self.non_terminals - 1) / self.non_terminals
-
     # @property
     # def cost(self):
     #     return self.solution.cost
 
     # procurar a solucao
-    def search(self, limit=None):
+    async def search(self, limit=None):
         while self.open_nodes != []:
+            await asyncio.sleep(0)  #  remover pra usar threads
             node = self.open_nodes.pop(0)
-            self.non_terminals += 1
             if self.problem.goal_test(node.state):
                 self.solution = node
-                self.terminals = len(self.open_nodes)
                 return self.get_path(node)
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
                 newnode = SearchNode(newstate, node, node.depth + 1)
-                
-                # if newnode.is_debug_test():
-                #     print("Newnode",newnode)
-
                 if not node.in_parent(newnode.state) and (limit is None or newnode.depth <= limit):
                     lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)

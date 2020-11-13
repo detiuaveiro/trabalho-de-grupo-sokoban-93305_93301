@@ -29,7 +29,7 @@ def get_keys(steps, witdh):
     
     step = steps[1] - steps[0]
     
-    print(step)
+    # print(step)
     if step == 1:
         key = 'd'
     elif step == witdh:
@@ -44,6 +44,7 @@ def result(mapa):
     game = Logic(mapa)
     agent = Agent(game)
     initial_state = State(game.keeper(), game.list_boxes())
+    # initial = {"keeper": mapa.keeper, "boxes": mapa.boxes}
     p = SearchProblem(agent, initial_state, game.list_goal())
     t = SearchTree(p,'breadth')
     t.search()          
