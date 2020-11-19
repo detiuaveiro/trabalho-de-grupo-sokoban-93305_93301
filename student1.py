@@ -35,8 +35,8 @@ async def solver(puzzle, solution):
 
         game = Logic(mapa)
         agent = Agent(game)
-        initial_state = State(game.keeper(), game.list_boxes())
-        p = SearchProblem(agent, initial_state, game.list_goal())
+        initial_state = State(game.keeper, game.boxes)
+        p = SearchProblem(agent, initial_state, game.goals)
         t = SearchTree(p,'breadth')
         while t.solution == None:
             await t.search()
