@@ -8,22 +8,24 @@ from mapa import Map
 from srAgente import *
 from tree_search import *
 
-def get_keys(steps, witdh):
+def get_keys(steps, width):
     if len(steps) <= 1:
         return []
     
     step = steps[1] - steps[0]
-    
+
     # print(step)
     if step == 1:
         key = 'd'
-    elif step == witdh:
+    elif step == width:
         key = 's'
     elif step == -1:
         key = 'a'
-    else:
+    elif step == -width:
         key = 'w'
-    return [key] + get_keys(steps[1:],witdh)
+    else:
+        key = ""
+    return [key] + get_keys(steps[1:],width)
 
 async def solver(puzzle, solution):
     while True:

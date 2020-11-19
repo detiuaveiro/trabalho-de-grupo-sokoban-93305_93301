@@ -7,19 +7,29 @@ class Logic:
     #node com keeper e caixas
     #posiçoes do mapa
     def __init__(self, mapa):
-        self.mapa = mapa
-        self.width = self.get_map_width()                      
+        self.mapa = mapa                     
         self.dead_squares = self.simple_deadlocks()
-        # print("Deadlocks:",self.dead_squares)
-        # print(self.width)
 
-    def get_map_width(self):
+    @property
+    def width(self):
         width = 0
         for line in self.mapa._map:
             if (len(line) > width):
                 width = len(line)
 
         return width
+
+    @property
+    def height(self):
+        height = 0
+        for line in self.mapa._map:
+            height += 1
+
+        return height
+
+    @property
+    def measures(self):
+        return self.width * self.height
     
     def coordenate_to_num(self, coordenate):
         return coordenate[1] * self.width + coordenate[0]
@@ -28,7 +38,7 @@ class Logic:
     def possible_moves(self, state):
         actlist_keeper = []
 
-        for tile in self.positions_around_keeper(state):
+        for tile in self.positions_around_tile(state.keeper):
             if self.move_is_valid(tile, state):
                 actlist_keeper.append(tile)
 
@@ -41,22 +51,19 @@ class Logic:
             return self.push_is_valid(tile, state)                     
                                                                 
         return not self.is_wall(tile)                           
-                                                                  
-    def has_box(self, tile, state):
-        return True if tile in state.boxes else False
+                                                                
     
-    def push_is_valid(self, box, state):
+    def push_is_valid(self, box, keeper, state):
 
-        new_box_position = self.new_box_position(box, state)
+        new_box_position = self.new_box_position(box, keeper)
 
         return not self.has_box(new_box_position, state) and not self.is_wall(new_box_position) and new_box_position not in self.dead_squares
     
-    def new_box_position(self, box, state):
-        return box + (box - state.keeper)
+    def new_box_position(self, box, tile):
+        return box + (box - tile)
 
-    def positions_around_keeper(self, state):
-        x = state.keeper
-        return [x - self.width, x + 1, x + self.width, x - 1]    #cima,dir,baixo,esq
+    def positions_around_tile(self, tile):
+        return [tile - self.width, tile + 1, tile + self.width, tile - 1]    #cima,dir,baixo,esq
 
     def map_positions(self):
         positions = self.mapa.filter_tiles([Tiles.FLOOR, Tiles.GOAL, Tiles.MAN, Tiles.MAN_ON_GOAL, Tiles.BOX, Tiles.BOX_ON_GOAL])
@@ -95,7 +102,10 @@ class Logic:
             list.append(self.coordenate_to_num(goal))
         
         return list
-
+    
+    def has_box(self, tile, state):
+        return True if tile in state.boxes else False
+    
     def is_wall(self, tile):
         return True if tile in self.list_walls() else False
 

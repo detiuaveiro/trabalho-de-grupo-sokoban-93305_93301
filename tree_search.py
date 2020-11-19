@@ -58,10 +58,14 @@ class SearchNode:
 ###########################################################################
 
 
-    def __init__(self, state, parent, depth): 
+    def __init__(self, state, path, parent, depth, cost, heuristic): 
         self.state = state
         self.parent = parent
         self.depth = depth
+        self.cost = cost
+        self.heuristic = heuristic
+        self.path = path
+
         if SearchNode.depth_count < depth:
             SearchNode.depth_count = depth
             print("Omg we're going deeper!!!!: ", SearchNode.depth_count)
@@ -79,7 +83,7 @@ class SearchNode:
 
     def __str__(self):
         # return f"no(State Keeper: {self.state_keeper}, State Boxes: {self.state_boxes}, Depth: {self.depth}, Parent: {self.parent})"
-        return f"no(State Keeper: {self.state.keeper}, Depth: {self.depth}, Parent: {self.parent})"
+        return f"no(State Keeper: {self.state.keeper}, Depth: {self.depth}, Parent: {self.parent}, Path: {self.path})"
         #return f"no(Depth: {self.depth})"
         #return "no(" + str(self.state) + "," + str(self.parent) + ")"
 
@@ -92,19 +96,18 @@ class SearchTree:
     # construtor
     def __init__(self, problem, strategy='breadth'): 
         self.problem = problem
-        root = SearchNode(problem.initial_state, None, 0)
+        root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state,problem.goal))
         self.open_nodes = [root]
         self.strategy = strategy
         self.solution = None
-
-    # obter o caminho (sequencia de estados) da raiz ate um no
+    
     def get_path(self,node):
         if node.parent == None:
             return [node.state.keeper]
         path = self.get_path(node.parent)
-        path += [node.state.keeper]
-        return(path)
-    
+        path.extend(node.path)
+        return path
+
     @property
     def length(self):
         return self.solution.depth
@@ -124,7 +127,7 @@ class SearchTree:
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
-                newnode = SearchNode(newstate, node, node.depth + 1)
+                newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate,self.problem.goal))
                 if not node.in_parent(newnode.state) and (limit is None or newnode.depth <= limit):
                     lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)
@@ -139,3 +142,6 @@ class SearchTree:
         elif self.strategy == 'uniform':
             self.open_nodes.extend(lnewnodes)
             self.open_nodes.sort(key=lambda n: n.cost)
+        elif self.strategy == 'a*':
+            self.open_nodes.extend(lnewnodes)
+            self.open_nodes.sort(key=lambda n: n.cost + n.heuristic)

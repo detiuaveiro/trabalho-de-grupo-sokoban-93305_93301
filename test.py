@@ -8,7 +8,10 @@ def test():
     mapa = Map("levels/2.xsb")
     game = Logic(mapa)
     agent = Agent(game)
-    initial = {"keeper": mapa.keeper, "boxes": mapa.boxes}
-    p = SearchProblem(agent, initial, mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL]))
+    initial = State(game.keeper(), game.list_boxes())
+    p = SearchProblem(agent, initial, game.list_goal())
 
+    print(list(enumerate(agent.searchReachable(p.initial_state))))
+
+    print(agent.actions(p.initial_state))
 test()
