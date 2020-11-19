@@ -96,7 +96,7 @@ class SearchTree:
     # construtor
     def __init__(self, problem, strategy='breadth'): 
         self.problem = problem
-        root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state,problem.goal))
+        root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state.boxes, problem.goal))
         self.open_nodes = [root]
         self.strategy = strategy
         self.solution = None
@@ -127,7 +127,7 @@ class SearchTree:
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
-                newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate,self.problem.goal))
+                newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal))
                 if not node.in_parent(newnode.state) and (limit is None or newnode.depth <= limit):
                     lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)

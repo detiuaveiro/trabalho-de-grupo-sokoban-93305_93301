@@ -37,7 +37,7 @@ async def solver(puzzle, solution):
         agent = Agent(game)
         initial_state = State(game.keeper, game.boxes)
         p = SearchProblem(agent, initial_state, game.goals)
-        t = SearchTree(p,'breadth')
+        t = SearchTree(p,'a*')
         while t.solution == None:
             await t.search()
         
@@ -51,7 +51,7 @@ async def agent_loop(puzzle, solution, server_address="localhost:8000", agent_na
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
 
         # Receive information about static game properties
-        await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
+        await websocket.send(json.dumps({"cmd": "join", "name": "SrAgente"}))
 
         while True:
             try:

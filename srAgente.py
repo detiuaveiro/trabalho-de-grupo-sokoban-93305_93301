@@ -54,20 +54,61 @@ class Agent(SearchDomain):
     def satisfies(self, state_boxes, goal):
         return state_boxes == goal
 
-    def heuristic(self, state, goal):
-        return self.distance_to_boxes(state.boxes,state.keeper)
-
     def cost(self, state, action):
         return 1
 
+        #heuristica numero 1
+    # def heuristic(self, boxes, goals):
+    #     min = self.min_distance(boxes, goals)
+    #     return min
 
-    def distance_to_boxes(self, boxes, keeper):
-        tdistance = 0
-        for box in boxes:
-            tdistance += self.__distance(box, keeper)
+    # def min_distance(self, boxes, goals):
+    #     distances = self.distances_all_boxes_to_goals(boxes, goals)
+    #     distance = 0
+    #     for box in distances:
+    #         distance += min(distances[box].values())
 
+    #     return distance
 
-        return tdistance
+    # def distances_all_boxes_to_goals(self, boxes, goals):
+    #     distances = {}
+    #     for box in boxes:
+    #         distances[box] = self.distances_to_goals(box, goals)
+
+    #     return distances
+
+    # def distances_to_goals(self, box, goals):
+    #     distance = {}
+    #     for goal in goals:
+    #         distance[goal] = self.__distance(box, goal)
+    #     return distance
+
+    #heuristica numero 2 (melhor ate agr)
+    def heuristic(self, boxes, goals):
+        return self.min_distance(boxes, goals)
+
+    def min_distance(self, boxes, goals):
+        visited_boxes = []
+        visited_goals = []
+        distances = self.distances_all_boxes_to_goals(boxes, goals)
+        distance = 0
+        
+        for par in distances:
+            if par[0][0] not in visited_boxes and par[0][1] not in visited_goals:
+                distance += par[1]
+                visited_boxes.append(par[0][0])
+                visited_goals.append(par[0][1])
+
+        return distance
+
+    def distances_all_boxes_to_goals(self, boxes, goals):
+        list = []
+        for box in boxes:   
+            for goal in goals:
+                list.append(((box,goal),self.__distance(box, goal)))
+
+        list.sort(key=lambda n : n[1])
+        return list
     
     def __distance(self, p1, p2):
         width = self.logic.width
