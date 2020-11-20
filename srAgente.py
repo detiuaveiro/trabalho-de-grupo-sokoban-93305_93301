@@ -13,7 +13,7 @@ import math
 class Agent(SearchDomain):
     def __init__(self, logic):
         self.logic = logic
-    
+
     #possiveis ações
     def actions(self, state):
         reachable_positions = self.__searchReachable(state)

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from state import *
 import asyncio
+from transposition_table import *
 
 # Dominios de pesquisa
 # Permitem calcular
@@ -39,7 +40,6 @@ class SearchDomain(ABC):
         pass
 
 class SearchProblem:
-    
     def __init__(self, domain, initial_state, goal):
         self.domain = domain
         self.initial_state = initial_state      # class state
@@ -92,11 +92,11 @@ class SearchNode:
 
 # Arvores de pesquisa
 class SearchTree:
-
     # construtor
     def __init__(self, problem, strategy='breadth'): 
         self.problem = problem
         root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state.boxes, problem.goal))
+        self.transposition_table = TranspositionTable(problem.domain.logic.measures)
         self.open_nodes = [root]
         self.strategy = strategy
         self.solution = None
@@ -128,8 +128,12 @@ class SearchTree:
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
                 newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal))
-                if not node.in_parent(newnode.state) and (limit is None or newnode.depth <= limit):
+                
+                if not self.transposition_table.in_table(newnode.state):
+                    self.transposition_table.put(newnode.state)
                     lnewnodes.append(newnode)
+                #if not node.in_parent(newnode.state) and (limit is None or newnode.depth <= limit):
+                #    lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)
         return None
 
