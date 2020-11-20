@@ -8,10 +8,13 @@ class Logic:
     #posiçoes do mapa
     def __init__(self, mapa):
         self.__mapa = mapa
-        self.__keeper = self.__coordenate_to_num(self.mapa.keeper)
-        self.__walls = [self.__coordenate_to_num(w) for w in self.mapa.filter_tiles([Tiles.WALL])]
+        self.__width = max([len(line) for line in mapa._map])
+        self.__height = len(mapa._map)
+        self.__measures = self.__width * self.__height
+        self.__keeper = self.__coordenate_to_num(mapa.keeper)
+        self.__walls = [self.__coordenate_to_num(w) for w in mapa.filter_tiles([Tiles.WALL])]
         self.__boxes = [self.__coordenate_to_num(b) for b in mapa.boxes]
-        self.__goals = [self.__coordenate_to_num(g) for g in self.mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL])]            
+        self.__goals = [self.__coordenate_to_num(g) for g in mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL])]
         self.__dead_squares = self.simple_deadlocks()
 
     @property
@@ -20,24 +23,15 @@ class Logic:
     
     @property
     def width(self):
-        width = 0
-        for line in self.mapa._map:
-            if (len(line) > width):
-                width = len(line)
-
-        return width
+        return self.__width
 
     @property
     def height(self):
-        height = 0
-        for line in self.mapa._map:
-            height += 1
-
-        return height
+        return self.__height
 
     @property
     def measures(self):
-        return self.width * self.height
+        return self.__measures
 
     @property
     def keeper(self):
@@ -79,7 +73,7 @@ class Logic:
         return box + (box - tile)
 
     def positions_around_tile(self, tile):
-        return [tile - self.width, tile + 1, tile + self.width, tile - 1]    #cima,dir,baixo,esq
+        return [tile - self.__width, tile + 1, tile + self.__width, tile - 1]    #cima,dir,baixo,esq
 
     def has_box(self, tile, state):
         return True if tile in state.boxes else False
@@ -88,7 +82,7 @@ class Logic:
         return True if tile in self.__walls else False
     
     def __coordenate_to_num(self, coordenate):
-        return coordenate[1] * self.width + coordenate[0]
+        return coordenate[1] * self.__width + coordenate[0]
     
     def __map_positions(self):
         positions = self.mapa.filter_tiles([Tiles.FLOOR, Tiles.GOAL, Tiles.MAN, Tiles.MAN_ON_GOAL, Tiles.BOX, Tiles.BOX_ON_GOAL])
@@ -116,12 +110,12 @@ class Logic:
             visited_squares.append((x-1))
             visited_squares = self.__pull_block((x-1),visited_squares)
 
-        if not self.is_wall(x + self.width) and not self.is_wall(x + self.width * 2) and (x + self.width) not in visited_squares:
-            visited_squares.append(x + self.width)
-            visited_squares = self.__pull_block((x + self.width),visited_squares)
+        if not self.is_wall(x + self.__width) and not self.is_wall(x + self.__width * 2) and (x + self.__width) not in visited_squares:
+            visited_squares.append(x + self.__width)
+            visited_squares = self.__pull_block((x + self.__width),visited_squares)
         
-        if not self.is_wall(x - self.width) and not self.is_wall(x - self.width * 2) and (x - self.width) not in visited_squares:
-            visited_squares.append((x - self.width))
-            visited_squares = self.__pull_block((x - self.width),visited_squares)
+        if not self.is_wall(x - self.__width) and not self.is_wall(x - self.__width * 2) and (x - self.__width) not in visited_squares:
+            visited_squares.append((x - self.__width))
+            visited_squares = self.__pull_block((x - self.__width),visited_squares)
 
         return visited_squares

@@ -53,7 +53,7 @@ class SearchNode:
 
 ###########################################################################
 
-    depth_count = 0
+    # depth_count = 0
 
 ###########################################################################
 
@@ -66,10 +66,9 @@ class SearchNode:
         self.heuristic = heuristic
         self.path = path
 
-        if SearchNode.depth_count < depth:
-            SearchNode.depth_count = depth
-            print("Omg we're going deeper!!!!: ", SearchNode.depth_count)
-        # self.cost = cost
+        # if SearchNode.depth_count < depth:
+        #     SearchNode.depth_count = depth
+        #     print("Omg we're going deeper!!!!: ", SearchNode.depth_count)
 
     def in_parent(self, state):
         
@@ -128,12 +127,9 @@ class SearchTree:
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
                 newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal))
-                
                 if not self.transposition_table.in_table(newnode.state):
                     self.transposition_table.put(newnode.state)
                     lnewnodes.append(newnode)
-                #if not node.in_parent(newnode.state) and (limit is None or newnode.depth <= limit):
-                #    lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)
         return None
 
