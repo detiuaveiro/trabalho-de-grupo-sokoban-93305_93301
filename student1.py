@@ -52,7 +52,7 @@ async def agent_loop(puzzle, solution, server_address="localhost:8000", agent_na
 
         # Receive information about static game properties
         await websocket.send(json.dumps({"cmd": "join", "name": "SrAgente"}))
-
+        
         while True:
             try:
                 update = json.loads(

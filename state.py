@@ -3,6 +3,12 @@ class State:
         self.keeper = keeper
         self.boxes = boxes
 
+    #def __hash__(self):
+    #    res = str(self.keeper)
+    #    for b in self.boxes:
+    #        res += str(b)
+    #   return int(res)
+
     def __eq__(self, other):
         if isinstance(other, State):    
             return self.keeper == other.keeper and self.boxes == other.boxes
