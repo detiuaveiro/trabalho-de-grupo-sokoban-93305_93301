@@ -36,8 +36,9 @@ async def solver(puzzle, solution):
         p = SearchProblem(agent, initial_state, game.goals)
         t = SearchTree(p,'a*')
         while t.solution == None:
-            await t.search()
+            res = await t.search()
         res = t.get_path(t.solution)
+        # print("resultado", res)
         keys = get_keys(res, game.width)
         await solution.put(keys)
 

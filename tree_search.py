@@ -124,6 +124,7 @@ class SearchTree:
                 self.solution = node
                 return self.get_path(node)
             lnewnodes = []
+            # print("Estamos na profundidade", node.depth)
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
                 newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal))
