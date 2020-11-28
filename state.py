@@ -13,3 +13,6 @@ class State:
         if isinstance(other, State):    
             return self.keeper == other.keeper and self.boxes == other.boxes
         return False
+
+    def __str__(self):
+        return f"State Keeper: {self.keeper}, State Boxes: {self.boxes})"

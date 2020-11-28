@@ -1,10 +1,3 @@
-#não esquecer de mandar coisas pro server nao ir abaixo
-#estar smp a consumir as msgs do servidor
-#3 mil steps por nivel (maximo) linha 117 do server.py
-#actions movimentos
-
-
-#map._map ---> todas as coordenadas do mapa
 from tree_search import *
 from game_logic import *
 from state import *
@@ -16,9 +9,10 @@ class Agent(SearchDomain):
 
     #possiveis ações
     def actions(self, state):
-        reachable_positions = self.__searchReachable(state)
         
+        reachable_positions = self.__searchReachable(state)
         boxes_paths = []
+        
         for box in state.boxes:
 
             pos_around_box = [t for t in self.logic.positions_around_tile(box) if not self.logic.is_wall(t) and self.logic.push_is_valid(box, t, state)]
@@ -31,22 +25,57 @@ class Agent(SearchDomain):
                     while next_pos != state.keeper:
                         path[:0] += [next_pos]
                         next_pos = reachable_positions[next_pos]
+
+                    if self.logic.tunnels != [] and box not in self.logic.goals:
+                        box_new = self.logic.new_box_position(box, pos)
+                        direction = box - pos
+                        extra_path = []
+                        # print("tunnels", self.logic.tunnels())
+                        for tunnel in self.logic.tunnels:
+                            if box_new in tunnel:
+                                extra_path = self.logic.directed_tunnel(tunnel, direction)
+                                # print("extra path", extra_path)
+                                for box_state in state.boxes:
+                                    # print("box", box)
+                                    if box_state ==  (extra_path[-1] + direction):
+                                        # print("extra path errado com a caixa", extra_path)
+                                        extra_path = extra_path[:-1]
+                                        # print("new extra path", extra_path)
+                                    
+                            # print("extra_path", extra_path)
+                        if extra_path != []:
+                            # print("encontrou um tunel")
+                            # print("tunel", extra_path)
+                            # print("path antes", path)
+                            path.extend(extra_path)
+                            # print("path depois", path)
                     
                     boxes_paths.append((box,path))
 
+        # print(boxes_paths)
+        # print("------------------------")
         return boxes_paths
     
     #consequencias da açao escolhida
     def result(self, state, action):
         box = action[0]
+        # print("initial box", box)
         keeper = action[1][-2]
+        # print("keeper", keeper)
 
         box_positions = state.boxes[:]
         box_positions.remove(box)
+        # print("box_positions dps do remove", box_positions)
+        if box != action[1][-1]:
+            box = action[1][-1]
+        # print("print box", box)
         box_positions.append(self.logic.new_box_position(box, keeper))
 
         box_positions.sort()
+        # print("box postions",box_positions)
         newstate = State(box, box_positions)
+        # print("newstate", newstate)
+        # print("---------------//----------------")
         
         return newstate
 
@@ -58,6 +87,7 @@ class Agent(SearchDomain):
         return 1
 
         #heuristica numero 1
+    
     # def heuristic(self, boxes, goals):
     #     min = self.min_distance(boxes, goals)
     #     return min
@@ -84,6 +114,38 @@ class Agent(SearchDomain):
     #     return distance
 
     #heuristica numero 2 (melhor ate agr)
+    # def heuristic(self, boxes, goals):
+    #     return self.min_distance(boxes, goals)
+
+    # def min_distance(self, boxes, goals):
+    #     visited_boxes = []
+    #     visited_goals = []
+    #     distances = self.distances_all_boxes_to_goals(boxes, goals)
+    #     distance = 0
+        
+    #     for par in distances:
+    #         if par[0][0] not in visited_boxes and par[0][1] not in visited_goals:
+    #             distance += par[1]
+    #             visited_boxes.append(par[0][0])
+    #             visited_goals.append(par[0][1])
+
+    #     return distance
+
+    # def distances_all_boxes_to_goals(self, boxes, goals):
+    #     list = []
+    #     for box in boxes:   
+    #         for goal in goals:
+    #             list.append(((box,goal),self.__distance(box, goal)))
+
+    #     list.sort(key=lambda n : n[1])
+    #     return list
+    
+    # def __distance(self, p1, p2):
+        # width = self.logic.width
+        # tmp = math.fabs(p1 - p2)
+        # return tmp // width + tmp % width
+
+    # heuristica numero 3 (em desenvolvimento)
     def heuristic(self, boxes, goals):
         return self.min_distance(boxes, goals)
 
@@ -105,15 +167,12 @@ class Agent(SearchDomain):
         list = []
         for box in boxes:   
             for goal in goals:
-                list.append(((box,goal),self.__distance(box, goal)))
+                cost = self.logic.costs[goal][box]
+                if cost != -1:
+                    list.append(((box,goal), cost))
 
         list.sort(key=lambda n : n[1])
         return list
-    
-    def __distance(self, p1, p2):
-        width = self.logic.width
-        tmp = math.fabs(p1 - p2)
-        return tmp // width + tmp % width
     
     #perform a graph search to search for reachable positions
     #

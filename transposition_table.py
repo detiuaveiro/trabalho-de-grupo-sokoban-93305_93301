@@ -2,26 +2,28 @@ import random
 from state import *
 from tree_search import *
 
-list_pieces = ('keeper','boxes','empty')
+list_pieces = ('keeper','box','empty')
 
 class TranspositionTable:
+    zobrist_table = None
     def __init__(self, measures):
-        self.__zobrist_table = ZobristTable(measures)
+        TranspositionTable.zobrist_table = ZobristTable(measures)
         self.__table = {}
 
-    def put(self,state):
-        self.__table[HashableState(state, self.__zobrist_table)] = 1
+    def put(self,state):        
+        self.__table[HashableState(state)] = 1
+        #self.__table[state] = 1
 
     def in_table(self,state):
-        return HashableState(state, self.__zobrist_table) in self.__table
+        return HashableState(state) in self.__table
+        #return state in self.__table
 
 class HashableState(State):
-    def __init__(self, state, zobrist_table):
+    def __init__(self, state):
         super().__init__(state.keeper, state.boxes)
-        self.zobrist_table = zobrist_table
 
     def __hash__(self):
-        return self.zobrist_table.hash_zobrist(self)
+        return TranspositionTable.zobrist_table.hash_zobrist(self)
 
 class ZobristTable:
     def __init__(self, measures):
@@ -34,8 +36,6 @@ class ZobristTable:
             self.__table.append({})
             for piece in list_pieces:
                 self.__table[p][piece] = self.random_number();        
-
-        #print("TABLE: ", table)
     
     def hash_zobrist(self, state):
         xor = lambda x,y: x^y
@@ -44,19 +44,26 @@ class ZobristTable:
         boxes = state.boxes
         #print("keeper",keeper)
         #print("boxes",boxes)
-        res = 0
-        for p in self.__table:
-            if p == keeper:
-                #print("WE GOT THE KEEPER")
-                next_operator = self.zobrist_table[p]['keeper']
-                #print("HASH: ", next_operator)
-            elif p in boxes:
-                #print("WE GOT A BOX")
-                next_operator = self.zobrist_table[p]['boxes']
-                #print("HASH: ", next_operator)
-            else:
-                next_operator = 0#self.zobrist_table[y][x]['empty']
-            res = xor(res,next_operator)
+        res = self.__table[keeper]['keeper']
+        for boxp in state.boxes:
+        #    res = xor(res,self.__table[boxp]['empty'])
+        #    res = xor(res,self.__table[boxp]['empty'])
+        #    res = xor(res,self.__table[boxp]['empty'])
+        #    res = xor(res,self.__table[boxp]['empty'])
+            res = xor(res,self.__table[boxp]['box'])
+
+        # for p in self.__table:
+        #     if p == keeper:
+        #         #print("WE GOT THE KEEPER")
+        #         next_operator = self.zobrist_table[p]['keeper']
+        #         #print("HASH: ", next_operator)
+        #     elif p in boxes:
+        #         #print("WE GOT A BOX")
+        #         next_operator = self.zobrist_table[p]['boxes']
+        #         #print("HASH: ", next_operator)
+        #     else:
+        #         next_operator = 0#self.zobrist_table[y][x]['empty']
+        #     res = xor(res,next_operator)
 
         return res
 
@@ -64,4 +71,6 @@ class ZobristTable:
     def random_number():
         #generate random number with 32 bits
         return random.getrandbits(32)
+
+
 
