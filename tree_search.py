@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from state import *
 import asyncio
 from transposition_table import *
+import time
 
 # Dominios de pesquisa
 # Permitem calcular
@@ -117,12 +118,17 @@ class SearchTree:
 
     # procurar a solucao
     async def search(self, limit=None):
+        start_time = time.time()
         while self.open_nodes != []:
             await asyncio.sleep(0)  #  remover pra usar threads
             node = self.open_nodes.pop(0)
             if self.problem.goal_test(node.state):
                 self.solution = node
                 return self.get_path(node)
+            
+            #if(time.time() - start_time > 70 ):
+            #    self.solution = node
+            #    return self.get_path(node)
             lnewnodes = []
             # print("Estamos na profundidade", node.depth)
             for a in self.problem.domain.actions(node.state):
@@ -132,6 +138,7 @@ class SearchTree:
                     self.transposition_table.put(newnode.state)
                     lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)
+
         return None
 
     # juntar novos nos a lista de nos abertos de acordo com a estrategia

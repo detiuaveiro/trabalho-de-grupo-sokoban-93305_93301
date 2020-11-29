@@ -1,6 +1,7 @@
 from mapa import Map
 from consts import Tiles
 from tree_search import *
+import time
 
 class Logic:
 
@@ -62,6 +63,7 @@ class Logic:
         return self.__costs
     
     #retorna uma lista de moves
+    #nao usado
     def possible_moves(self, state):
         actlist_keeper = []
         for tile in self.positions_around_tile(state.__keeper):
@@ -78,10 +80,11 @@ class Logic:
                                                                 
     def push_is_valid(self, box, keeper, state):
         new_box_position = self.new_box_position(box, keeper)
-        return not self.has_box(new_box_position, state) and not self.is_wall(new_box_position) and new_box_position not in self.__dead_squares
+        #first condition bug!
+        return not self.has_box(keeper, state) and not self.has_box(new_box_position, state) and not self.is_wall(new_box_position) and new_box_position not in self.__dead_squares and not self.freeze_deadlock(state, box, new_box_position)
     
-    def new_box_position(self, box, tile):
-        return box + (box - tile)
+    def new_box_position(self, box, keeper):
+        return box + (box - keeper)
 
     def positions_around_tile(self, tile):
         return [tile - self.__width, tile + 1, tile + self.__width, tile - 1]    #cima,dir,baixo,esq
@@ -111,12 +114,13 @@ class Logic:
             valid_squares += visited
             dict[g] = calculated_costs
 
-        valid_squares = list(set(valid_squares))
+        valid_squares = list((valid_squares))
         # print("custos",dict)   #na posiçao x, index x ---> custo costs[x]
         
         return valid_squares, dict
 
     #--------Deadlocks---------#
+    #----predetermined deadlocks
     def simple_deadlocks(self):
         return [square for square in self.__map_positions() if square not in self.__valid_squares]
 
@@ -146,6 +150,82 @@ class Logic:
             visited_squares , costs= self.__pull_block((x - self.__width), visited_squares, costs)
 
         return visited_squares, costs
+
+    #----Run time deadlocks
+    #detect immoveable boxes
+    #if a box gets frozen without being on a goal there is no solution
+    def freeze_deadlock(self, state, box, new_box_position):
+        newBoxState = state.boxes[:]
+        newBoxState.remove(box)
+        newBoxState.append(new_box_position)
+
+        #print("old", box)
+        #print("new", new_box_position)
+        potential_immoveable = newBoxState
+        limit = len(potential_immoveable)
+        #print("potential_immoveable",potential_immoveable)
+        
+        #print("----newState---")
+        froze = False
+        while potential_immoveable != [] and froze == False:
+
+            box = potential_immoveable.pop(0)
+            reinsert = False
+            lBoxes = []
+            lWalls = []
+        
+            for pos in self.positions_around_tile(box):
+                if pos in self.walls:
+                    lWalls += [pos]
+                if pos in newBoxState and pos in potential_immoveable:
+                    lBoxes += [pos]
+
+            # print("Box: ",box)            
+            # if lBoxes != []:
+            #     print("-------")
+            #     print("lWalls",lWalls)
+            #     print("lBoxes",lBoxes)
+
+            #this condition insures that box is moveable
+            if lBoxes == [] or (len(lBoxes) == 1 and len(lWalls) == 0) or box in self.goals:
+                continue
+
+            #verify if adjacent box/wall are in the same line/colun 
+            #if not (box is potencially immoveable), we need to check immobility of adjacent box 
+            while reinsert != True and lBoxes != []:
+                adj = lBoxes.pop(0) 
+                #print("here")
+                wall_idx = 0
+                while reinsert != True and wall_idx < len(lWalls): 
+                    wall = lWalls[wall_idx]
+                    #print("wall box", adj)
+                    if (adj // self.width) != (wall // self.width) and (adj % self.width) != (wall % self.width):
+                        #print("reinsert in walls")
+                        reinsert = True
+                    else:
+                        #print("not reinserting in walls")
+                        wall_idx += 1
+                
+                b_idx = 0
+                while reinsert != True and b_idx < len(lBoxes):
+                    b = lBoxes[b_idx]
+                    if (adj // self.width) != (b // self.width) and (adj % self.width) != (b % self.width):
+                        reinsert = True
+                        #print("reinsert in boxes")
+                    else:
+                        #print("not reinserting in boxes")
+                        b_idx += 1
+
+            if reinsert:
+                #print("reinsert")
+                potential_immoveable.append(box)
+                limit -= 1
+                if limit == 0:
+                    froze = True
+            else:
+                limit = len(potential_immoveable)
+
+        return froze
 
     def is_tunnel(self, box):
 

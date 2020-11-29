@@ -8,6 +8,8 @@ class Agent(SearchDomain):
         self.logic = logic
 
     #possiveis ações
+
+    # actions = (box , move list)
     def actions(self, state):
         
         reachable_positions = self.__searchReachable(state)
@@ -84,7 +86,7 @@ class Agent(SearchDomain):
         return state_boxes == goal
 
     def cost(self, state, action):
-        return 1
+        return len(action)
 
         #heuristica numero 1
     
@@ -168,8 +170,8 @@ class Agent(SearchDomain):
         for box in boxes:   
             for goal in goals:
                 cost = self.logic.costs[goal][box]
-                if cost != -1:
-                    list.append(((box,goal), cost))
+                #if cost != -1:
+                list.append(((box,goal), cost))
 
         list.sort(key=lambda n : n[1])
         return list
