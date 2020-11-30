@@ -139,7 +139,10 @@ class SearchTree:
                     lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)
 
-        return None
+        #self.solution = node
+        return self.get_path(node)
+        
+        #return None
 
     # juntar novos nos a lista de nos abertos de acordo com a estrategia
     def add_to_open(self,lnewnodes):

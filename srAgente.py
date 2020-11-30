@@ -17,7 +17,7 @@ class Agent(SearchDomain):
         
         for box in state.boxes:
 
-            pos_around_box = [t for t in self.logic.positions_around_tile(box) if not self.logic.is_wall(t) and self.logic.push_is_valid(box, t, state)]
+            pos_around_box = [t for t in self.logic.positions_around_tile(box) if not self.logic.is_wall(t) and not self.logic.has_box(t,state)  and self.logic.push_is_valid(box, t, state)]
 
             for pos in pos_around_box:
                 if reachable_positions[pos] != -1:
