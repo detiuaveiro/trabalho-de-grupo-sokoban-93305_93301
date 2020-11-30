@@ -5,61 +5,69 @@ import time
 
 class Logic:
 
-    #node com keeper e caixas
-    #posiçoes do mapa
-    def __init__(self, mapa):
-        self.__mapa = mapa
-        self.__width = max([len(line) for line in mapa._map])
-        self.__height = len(mapa._map)
-        self.__measures = self.__width * self.__height
-        self.__keeper = self.__coordenate_to_num(mapa.keeper)
-        self.__walls = [self.__coordenate_to_num(w) for w in mapa.filter_tiles([Tiles.WALL])]
-        self.__boxes = [self.__coordenate_to_num(b) for b in mapa.boxes]
-        self.__goals = [self.__coordenate_to_num(g) for g in mapa.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL])]
-        self.__valid_squares, self.__costs = self.get_valid_squares_and_costs()
-        self.__dead_squares = self.simple_deadlocks()
-        self.__valid_squares_for_tunnels = [square for square in self.__valid_squares if square not in self.__goals]
-        self.__valid_squares_for_tunnels.sort()
-        self.__tunnels = self.get_tunnels()
+    def __init__(self, map):
+        self.__map = map
+        self.__width = max([len(line) for line in map._map])
+        self.__height = len(map._map)
+        self.__area = self.__width * self.__height
+        self.__keeper = self.__coordenate_to_num(map.keeper)
+        self.__walls = [self.__coordenate_to_num(w) for w in map.filter_tiles([Tiles.WALL])]
+        self.__boxes = [self.__coordenate_to_num(b) for b in map.boxes]
+        self.__goals = [self.__coordenate_to_num(g) for g in map.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL])]
+        self.__valid_tiles, self.__costs = self.__get_valid_tiles_and_costs()
+        self.__dead_tiles = self.__simple_deadlocks()
+        self.__valid_tiles_for_tunnels = [tile for tile in self.__valid_tiles if tile not in self.__goals]
+        self.__valid_tiles_for_tunnels.sort()
+        self.__tunnels = self.__get_tunnels()
 
     @property
-    def mapa(self):
-        return self.__mapa
+    def map(self):
+        """Current map."""
+        return self.__map
     
     @property
     def width(self):
+        """Width of the current map."""
         return self.__width
 
     @property
     def height(self):
+        """Height of the current map."""
         return self.__height
 
     @property
-    def measures(self):
-        return self.__measures
+    def area(self):
+        """Area of the current map."""
+        return self.__area
 
     @property
     def keeper(self):
+        """Keeper position."""
         return self.__keeper
 
     @property
     def walls(self):
+        """List of the positions of walls."""
         return self.__walls
 
     @property
     def boxes(self):
+        """List of the positions of boxes."""
         return self.__boxes
 
     @property
     def goals(self):
+        """List of the positions of goals."""
         return self.__goals
 
     @property
     def tunnels(self):
+        """List of the positions of tunnels."""
         return self.__tunnels
 
     @property
     def costs(self):
+        """Dictionary with the costs of each position to the each goal."""
         return self.__costs
     
     #retorna uma lista de moves
@@ -81,80 +89,108 @@ class Logic:
     def push_is_valid(self, box, keeper, state):
         new_box_position = self.new_box_position(box, keeper)
         #first condition bug!
-        return not self.has_box(keeper, state) and not self.has_box(new_box_position, state) and not self.is_wall(new_box_position) and new_box_position not in self.__dead_squares and not self.freeze_deadlock(state, box, new_box_position)
+        return not self.has_box(keeper, state) and not self.has_box(new_box_position, state) and not self.is_wall(new_box_position) and new_box_position not in self.__dead_tiles and not self.__freeze_deadlock(state, box, new_box_position)
     
-    def new_box_position(self, box, keeper):
-        return box + (box - keeper)
+    def new_box_position(self, box, tile):
+        """Position of box after beeing pushed from tile."""
+        return box + (box - tile)
 
     def positions_around_tile(self, tile):
-        return [tile - self.__width, tile + 1, tile + self.__width, tile - 1]    #cima,dir,baixo,esq
+        """List of positions around tile."""
+        return [tile - self.__width, tile + 1, tile + self.__width, tile - 1]
 
     def has_box(self, tile, state):
+        """Check if tile has box."""
         return True if tile in state.boxes else False
     
     def is_wall(self, tile):
+        """Chech if tile is wall."""
         return True if tile in self.__walls else False
     
+    def directed_tunnel(self, tunnel, direction):
+        """Return the tunnel ordered based on the direction.
+
+        Preconditions:
+
+        tunnel should be ordered, left to right or top to bottom.
+
+        direction given by the diference between next position and current position.
+        """
+        tunnel_copy = tunnel[:]
+        
+        if direction < 0:
+            tunnel_copy.reverse()
+
+        return tunnel_copy
+
     def __coordenate_to_num(self, coordenate):
+        """Turn a coordenate to a number."""
         return coordenate[1] * self.__width + coordenate[0]
     
     def __map_positions(self):
-        positions = self.mapa.filter_tiles([Tiles.FLOOR, Tiles.GOAL, Tiles.MAN, Tiles.MAN_ON_GOAL, Tiles.BOX, Tiles.BOX_ON_GOAL])
+        """List of all map positions without walls."""
+        positions = self.__map.filter_tiles([Tiles.FLOOR, Tiles.GOAL, Tiles.MAN, Tiles.MAN_ON_GOAL, Tiles.BOX, Tiles.BOX_ON_GOAL])
         return [self.__coordenate_to_num(p) for p in positions]
 
-    def get_valid_squares_and_costs(self):
+    def __get_valid_tiles_and_costs(self):
+        """ Returns a tuple.
 
-        valid_squares = []
-        costs = [-1] * self.measures
+        tuple[0] - valid tiles for boxes.
+
+        tuple[1] - is a dictionary where the keys are the goals and the values are arrays with the costs.
+
+        example: for goal x if box in y --> cost = tuple[x][y]
+        """
+
+        valid_tiles = []
+        costs = [-1] * self.__area
         dict = {}
         for g in self.__goals:
             starting_costs = costs[:]
             starting_costs[g] = 0
             visited, calculated_costs = (self.__pull_block(g, [g], starting_costs))
-            valid_squares += visited
+            valid_tiles += visited
             dict[g] = calculated_costs
 
-        valid_squares = list((valid_squares))
-        # print("custos",dict)   #na posiçao x, index x ---> custo costs[x]
+        valid_tiles = list(set(valid_tiles))
         
-        return valid_squares, dict
+        return valid_tiles, dict
 
-    #--------Deadlocks---------#
-    #----predetermined deadlocks
-    def simple_deadlocks(self):
-        return [square for square in self.__map_positions() if square not in self.__valid_squares]
+    def __simple_deadlocks(self):
+        """Return tiles that are not valid."""
+        return [tile for tile in self.__map_positions() if tile not in self.__valid_tiles]
 
-    #auxiliary function for square_deadlock
-    def __pull_block(self, pull_from, visited_squares, costs):
+    #auxiliary function for tile_deadlock
+    def __pull_block(self, pull_from, visited_tiles, costs):
 
         x = pull_from
         #set keeper next to the box (try positions around the box) and try to pull the box
-        if not self.is_wall(x+1) and not self.is_wall(x+2) and (x+1) not in visited_squares:
-            visited_squares.append((x+1))
+        if not self.is_wall(x+1) and not self.is_wall(x+2) and (x+1) not in visited_tiles:
+            visited_tiles.append((x+1))
             costs[x+1] = costs[x] + 1
-            visited_squares , costs = self.__pull_block((x+1), visited_squares, costs)
+            visited_tiles , costs = self.__pull_block((x+1), visited_tiles, costs)
         
-        if not self.is_wall(x-1) and not self.is_wall(x-2) and (x-1) not in visited_squares:
-            visited_squares.append((x-1))
+        if not self.is_wall(x-1) and not self.is_wall(x-2) and (x-1) not in visited_tiles:
+            visited_tiles.append((x-1))
             costs[x-1] = costs[x] + 1
-            visited_squares , costs = self.__pull_block((x-1), visited_squares, costs)
+            visited_tiles , costs = self.__pull_block((x-1), visited_tiles, costs)
 
-        if not self.is_wall(x + self.__width) and not self.is_wall(x + self.__width * 2) and (x + self.__width) not in visited_squares:
-            visited_squares.append((x + self.__width))
+        if not self.is_wall(x + self.__width) and not self.is_wall(x + self.__width * 2) and (x + self.__width) not in visited_tiles:
+            visited_tiles.append((x + self.__width))
             costs[x+self.width] = costs[x] + 1
-            visited_squares , costs = self.__pull_block((x + self.__width), visited_squares, costs)
+            visited_tiles , costs = self.__pull_block((x + self.__width), visited_tiles, costs)
         
-        if not self.is_wall(x - self.__width) and not self.is_wall(x - self.__width * 2) and (x - self.__width) not in visited_squares:
-            visited_squares.append((x - self.__width))
+        if not self.is_wall(x - self.__width) and not self.is_wall(x - self.__width * 2) and (x - self.__width) not in visited_tiles:
+            visited_tiles.append((x - self.__width))
             costs[x-self.width] = costs[x] + 1
-            visited_squares , costs= self.__pull_block((x - self.__width), visited_squares, costs)
+            visited_tiles , costs = self.__pull_block((x - self.__width), visited_tiles, costs)
 
-        return visited_squares, costs
+        return visited_tiles, costs
 
     #----Run time deadlocks
     #detect immoveable boxes
     #if a box gets frozen without being on a goal there is no solution
-    def freeze_deadlock(self, state, box, new_box_position):
+    def __freeze_deadlock(self, state, box, new_box_position):
         newBoxState = state.boxes[:]
         newBoxState.remove(box)
         newBoxState.append(new_box_position)
@@ -227,63 +263,88 @@ class Logic:
 
         return froze
 
-    def is_tunnel(self, box):
+    def __in_tunnel(self, box):
+        """ Check if box is in a tunnel.
 
-        #vertical
+        Return values:
+
+        0 - not in a tunnel.
+
+        1 - horizontal tunnel.
+
+        -1 - vertical tunnel.
+        """
+
         if self.is_wall(box - 1) and self.is_wall(box + 1):
             return -1
 
-        #horizontal
         if self.is_wall(box - self.__width) and self.is_wall(box + self.__width):
             return 1
         
         return 0
 
-    def get_tunnels(self):
+    def __get_tunnels(self):
+        """Return all existing tunnels.
+
+        A tunnel must have length > 1.
+
+        Returns [] if there's no tunnels.
+        """
 
         tunnels = []
-        visited_squares = []
+        visited_tiles = []
 
-        for square in self.__valid_squares_for_tunnels:
-            if square not in visited_squares:
-                tunnel =  self.tunnel(square)
+        #Check in valid_tiles_for_tunnels if there could be a tunnel
+        for tile in self.__valid_tiles_for_tunnels:
+            if tile not in visited_tiles:
+                tunnel =  self.__tunnel(tile)
                 if len(tunnel) > 1:
                     tunnels.append(tunnel)
-                    visited_squares.extend(tunnel)
+                    visited_tiles.extend(tunnel)
 
         return tunnels
             
-    def tunnel(self, square):
+    def __tunnel(self, tile):
+        """Return a tunnel if tile is part of it.
+        
+        Returns [] if there's no tunnel.
+        """
         tunnel = []
-        is_tunnel = self.is_tunnel(square)
+        is_tunnel = self.__in_tunnel(tile)
         
         offset = 1
         if is_tunnel == -1:
             offset = self.__width
 
+        #Check both sides
         if is_tunnel != 0:
-            tunnel += [square]
-            tunnel.extend(self.find_tunnel_exit(square, offset, -1))
-            tunnel.extend(self.find_tunnel_exit(square, offset, 1))
+            tunnel += [tile]
+            tunnel.extend(self.__find_tunnel_exit(tile, offset, -1))
+            tunnel.extend(self.__find_tunnel_exit(tile, offset, 1))
 
         return tunnel
 
-    #direction = posição a seguir - atual
-    def directed_tunnel(self, tunnel, direction):
-        tunnel_copy = tunnel[:]
+    def __find_tunnel_exit(self, tile, tile_jump_modifier, direction_modifier):
+        """Search for the end of a tunnel.
         
-        if direction < 0:
-            tunnel_copy.reverse()
+        Arguments:
 
-        return tunnel_copy
+        tile: start of the search.
 
-    def find_tunnel_exit(self, square, offset, direction_modifier):
+        tile_jump_modifier: 1 for horizontal movement; map width for vertical movement.
+
+        direction_modifier: direction to search. -1 for up or left; 1 for down or right.
+
+        Returns [] if there's no tunnel.
+        """
         tunnel = []
-        entrance = square
-        if (square + direction_modifier * offset) in self.__valid_squares_for_tunnels:
-            entrance = square + direction_modifier * offset
-            while self.is_tunnel(entrance) != 0 and entrance not in tunnel:
+        entrance = tile
+
+        #Check if next position is still in the tunnel
+        if (tile + direction_modifier * tile_jump_modifier) in self.__valid_tiles_for_tunnels:
+            entrance = tile + direction_modifier * tile_jump_modifier
+            while self.__in_tunnel(entrance) != 0 and entrance not in tunnel:
                 tunnel += [entrance]
-                if (entrance + direction_modifier * offset) in self.__valid_squares_for_tunnels:
-                    entrance += direction_modifier * offset
+                if (entrance + direction_modifier * tile_jump_modifier) in self.__valid_tiles_for_tunnels:
+                    entrance += direction_modifier * tile_jump_modifier
         return tunnel

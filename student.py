@@ -29,8 +29,8 @@ def get_keys(steps, width):
 async def solver(puzzle, solution):
     while True:
         game_properties = await puzzle.get()
-        mapa = Map(game_properties["map"])
-        game = Logic(mapa)
+        map = Map(game_properties["map"])
+        game = Logic(map)
         agent = Agent(game)
         initial_state = State(game.keeper, game.boxes)
         p = SearchProblem(agent, initial_state, game.goals)

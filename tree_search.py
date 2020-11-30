@@ -96,7 +96,7 @@ class SearchTree:
     def __init__(self, problem, strategy='breadth'): 
         self.problem = problem
         root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state.boxes, problem.goal))
-        self.transposition_table = TranspositionTable(problem.domain.logic.measures)
+        self.transposition_table = TranspositionTable(problem.domain.logic.area)
         self.open_nodes = [root]
         self.strategy = strategy
         self.solution = None

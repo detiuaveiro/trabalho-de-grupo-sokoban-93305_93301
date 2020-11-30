@@ -6,8 +6,8 @@ list_pieces = ('keeper','box','empty')
 
 class TranspositionTable:
     zobrist_table = None
-    def __init__(self, measures):
-        TranspositionTable.zobrist_table = ZobristTable(measures)
+    def __init__(self, area):
+        TranspositionTable.zobrist_table = ZobristTable(area)
         self.__table = {}
 
     def put(self,state):        
@@ -26,13 +26,13 @@ class HashableState(State):
         return TranspositionTable.zobrist_table.hash_zobrist(self)
 
 class ZobristTable:
-    def __init__(self, measures):
+    def __init__(self, area):
         #the table is a list that represents each position of the map
         #each position as random values for each piece 
         #zobrist_table = [{"keeper": rand_number, "boxes": rand_number, 'empty': rand_number}, {"keeper": rand_number , "boxes": rand_number}, ... ] 
 
         self.__table = []
-        for p in range(measures):
+        for p in range(area):
             self.__table.append({})
             for piece in list_pieces:
                 self.__table[p][piece] = self.random_number();        

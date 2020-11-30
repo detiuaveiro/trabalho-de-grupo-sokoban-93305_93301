@@ -86,7 +86,7 @@ class Agent(SearchDomain):
         return state_boxes == goal
 
     def cost(self, state, action):
-        return len(action)
+        return 1
 
         #heuristica numero 1
     
@@ -156,8 +156,13 @@ class Agent(SearchDomain):
         visited_goals = []
         distances = self.distances_all_boxes_to_goals(boxes, goals)
         distance = 0
+
+        len_boxes = len(boxes)
+        len_goals = len(goals)
         
         for par in distances:
+            if len(visited_boxes) == len_boxes and len(visited_goals) == len_goals:
+                break
             if par[0][0] not in visited_boxes and par[0][1] not in visited_goals:
                 distance += par[1]
                 visited_boxes.append(par[0][0])
@@ -170,8 +175,8 @@ class Agent(SearchDomain):
         for box in boxes:   
             for goal in goals:
                 cost = self.logic.costs[goal][box]
-                #if cost != -1:
-                list.append(((box,goal), cost))
+                if cost != -1:
+                    list.append(((box,goal), cost))
 
         list.sort(key=lambda n : n[1])
         return list
@@ -181,7 +186,7 @@ class Agent(SearchDomain):
     #returns a list containing the predecessors of each track. If predec[track] = -1 the location is unreachable
     def __searchReachable(self, state):
         #graph (Tiles (track)), predecessors)
-        predec = [-1] * self.logic.measures
+        predec = [-1] * self.logic.area
         initial = state.keeper
         queue = [initial]
         visited = [initial]
