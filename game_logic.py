@@ -88,8 +88,7 @@ class Logic:
                                                                 
     def push_is_valid(self, box, keeper, state):
         new_box_position = self.new_box_position(box, keeper)
-        #first condition bug!
-        return not self.has_box(keeper, state) and not self.has_box(new_box_position, state) and not self.is_wall(new_box_position) and new_box_position not in self.__dead_tiles and not self.__freeze_deadlock(state, box, new_box_position)
+        return not self.has_box(new_box_position, state) and not self.is_wall(new_box_position) and new_box_position not in self.__dead_tiles and not self.__freeze_deadlock(state, box, new_box_position)
     
     def new_box_position(self, box, tile):
         """Position of box after beeing pushed from tile."""
@@ -177,31 +176,30 @@ class Logic:
 
         if not self.is_wall(x + self.__width) and not self.is_wall(x + self.__width * 2) and (x + self.__width) not in visited_tiles:
             visited_tiles.append((x + self.__width))
-            costs[x+self.width] = costs[x] + 1
+            costs[x+self.__width] = costs[x] + 1
             visited_tiles , costs = self.__pull_block((x + self.__width), visited_tiles, costs)
         
         if not self.is_wall(x - self.__width) and not self.is_wall(x - self.__width * 2) and (x - self.__width) not in visited_tiles:
             visited_tiles.append((x - self.__width))
-            costs[x-self.width] = costs[x] + 1
+            costs[x-self.__width] = costs[x] + 1
             visited_tiles , costs = self.__pull_block((x - self.__width), visited_tiles, costs)
 
         return visited_tiles, costs
 
-    #----Run time deadlocks
+    #----Run time deadlocks----
     #detect immoveable boxes
     #if a box gets frozen without being on a goal there is no solution
     def __freeze_deadlock(self, state, box, new_box_position):
         newBoxState = state.boxes[:]
         newBoxState.remove(box)
         newBoxState.append(new_box_position)
-
+        
+        #print("----newState---")
         #print("old", box)
         #print("new", new_box_position)
         potential_immoveable = newBoxState
         limit = len(potential_immoveable)
-        #print("potential_immoveable",potential_immoveable)
         
-        #print("----newState---")
         froze = False
         while potential_immoveable != [] and froze == False:
 
@@ -216,12 +214,6 @@ class Logic:
                 if pos in newBoxState and pos in potential_immoveable:
                     lBoxes += [pos]
 
-            # print("Box: ",box)            
-            # if lBoxes != []:
-            #     print("-------")
-            #     print("lWalls",lWalls)
-            #     print("lBoxes",lBoxes)
-
             #this condition insures that box is moveable
             if lBoxes == [] or (len(lBoxes) == 1 and len(lWalls) == 0) or box in self.goals:
                 continue
@@ -235,7 +227,7 @@ class Logic:
                 while reinsert != True and wall_idx < len(lWalls): 
                     wall = lWalls[wall_idx]
                     #print("wall box", adj)
-                    if (adj // self.width) != (wall // self.width) and (adj % self.width) != (wall % self.width):
+                    if (adj // self.__width) != (wall // self.__width) and (adj % self.__width) != (wall % self.__width):
                         #print("reinsert in walls")
                         reinsert = True
                     else:
@@ -245,7 +237,7 @@ class Logic:
                 b_idx = 0
                 while reinsert != True and b_idx < len(lBoxes):
                     b = lBoxes[b_idx]
-                    if (adj // self.width) != (b // self.width) and (adj % self.width) != (b % self.width):
+                    if (adj // self.__width) != (b // self.__width) and (adj % self.__width) != (b % self.__width):
                         reinsert = True
                         #print("reinsert in boxes")
                     else:
@@ -253,11 +245,10 @@ class Logic:
                         b_idx += 1
 
             if reinsert:
-                #print("reinsert")
                 potential_immoveable.append(box)
-                limit -= 1
                 if limit == 0:
                     froze = True
+                limit -= 1
             else:
                 limit = len(potential_immoveable)
 
