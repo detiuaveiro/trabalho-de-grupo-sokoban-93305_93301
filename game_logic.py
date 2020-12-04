@@ -16,9 +16,9 @@ class Logic:
         self.__goals = [self.__coordenate_to_num(g) for g in map.filter_tiles([Tiles.GOAL, Tiles.MAN_ON_GOAL, Tiles.BOX_ON_GOAL])]
         self.__valid_tiles, self.__costs = self.__get_valid_tiles_and_costs()
         self.__dead_tiles = self.__simple_deadlocks()
-        self.__valid_tiles_for_tunnels = [tile for tile in self.__valid_tiles if tile not in self.__goals]
-        self.__valid_tiles_for_tunnels.sort()
-        self.__tunnels = self.__get_tunnels()
+        # self.__valid_tiles_for_tunnels = [tile for tile in self.__valid_tiles if tile not in self.__goals]
+        # self.__valid_tiles_for_tunnels.sort()
+        # self.__tunnels = self.__get_tunnels()
 
     @property
     def map(self):

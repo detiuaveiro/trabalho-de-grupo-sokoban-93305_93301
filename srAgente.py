@@ -28,29 +28,29 @@ class Agent(SearchDomain):
                         path[:0] += [next_pos]
                         next_pos = reachable_positions[next_pos]
 
-                    if self.logic.tunnels != [] and box not in self.logic.goals:
-                        box_new = self.logic.new_box_position(box, pos)
-                        direction = box - pos
-                        extra_path = []
-                        # print("tunnels", self.logic.tunnels())
-                        for tunnel in self.logic.tunnels:
-                            if box_new in tunnel:
-                                extra_path = self.logic.directed_tunnel(tunnel, direction)
-                                # print("extra path", extra_path)
-                                for box_state in state.boxes:
-                                    # print("box", box)
-                                    if box_state ==  (extra_path[-1] + direction):
-                                        # print("extra path errado com a caixa", extra_path)
-                                        extra_path = extra_path[:-1]
-                                        # print("new extra path", extra_path)
+                    # if self.logic.tunnels != [] and box not in self.logic.goals:
+                    #     box_new = self.logic.new_box_position(box, pos)
+                    #     direction = box - pos
+                    #     extra_path = []
+                    #     # print("tunnels", self.logic.tunnels())
+                    #     for tunnel in self.logic.tunnels:
+                    #         if box_new in tunnel:
+                    #             extra_path = self.logic.directed_tunnel(tunnel, direction)
+                    #             # print("extra path", extra_path)
+                    #             for box_state in state.boxes:
+                    #                 # print("box", box)
+                    #                 if box_state ==  (extra_path[-1] + direction):
+                    #                     # print("extra path errado com a caixa", extra_path)
+                    #                     extra_path = extra_path[:-1]
+                    #                     # print("new extra path", extra_path)
                                     
-                            # print("extra_path", extra_path)
-                        if extra_path != []:
-                            # print("encontrou um tunel")
-                            # print("tunel", extra_path)
-                            # print("path antes", path)
-                            path.extend(extra_path)
-                            # print("path depois", path)
+                    #         # print("extra_path", extra_path)
+                    #     if extra_path != []:
+                    #         # print("encontrou um tunel")
+                    #         # print("tunel", extra_path)
+                    #         # print("path antes", path)
+                    #         path.extend(extra_path)
+                    #         # print("path depois", path)
                     
                     boxes_paths.append((box,path))
 
