@@ -59,13 +59,14 @@ class SearchNode:
 ###########################################################################
 
 
-    def __init__(self, state, path, parent, depth, cost, heuristic): 
+    def __init__(self, state, path, parent, depth, cost, heuristic, reacheable_positions): 
         self.state = state
         self.parent = parent
         self.depth = depth
         self.cost = cost
         self.heuristic = heuristic
         self.path = path
+        self.reacheable_positions = reacheable_positions
 
         # if SearchNode.depth_count < depth:
         #     SearchNode.depth_count = depth
@@ -95,7 +96,7 @@ class SearchTree:
     # construtor
     def __init__(self, problem, strategy='breadth'): 
         self.problem = problem
-        root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state.boxes, problem.goal))
+        root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state.boxes, problem.goal),  self.problem.domain.logic.reacheable_positions(problem.initial_state.keeper, problem.initial_state.boxes))
         self.transposition_table = TranspositionTable(problem.domain.logic.area)
         self.open_nodes = [root]
         self.strategy = strategy
@@ -131,15 +132,15 @@ class SearchTree:
             #    return self.get_path(node)
             lnewnodes = []
             # print("Estamos na profundidade", node.depth)
-            for a in self.problem.domain.actions(node.state):
-                newstate = self.problem.domain.result(node.state, a)
-                newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal))
+            for a in self.problem.domain.actions(node.state, node.reacheable_positions):
+                newstate, reacheable_positions = self.problem.domain.result(node.state, a)
+                newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal), reacheable_positions)
                 if not self.transposition_table.in_table(newnode.state):
                     self.transposition_table.put(newnode.state)
                     lnewnodes.append(newnode)
             self.add_to_open(lnewnodes)
 
-        #self.solution = node
+        self.solution = node
         return self.get_path(node)
         
         #return None

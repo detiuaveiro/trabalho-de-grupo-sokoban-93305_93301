@@ -97,7 +97,33 @@ class Logic:
     def positions_around_tile(self, tile):
         """List of positions around tile."""
         return [tile - self.__width, tile + 1, tile + self.__width, tile - 1]
+    
+    #perform a graph search to search for reachable positions
+    #
+    #returns a list containing the predecessors of each track. If predec[track] = -1 the location is unreachable
+    def reacheable_positions(self, keeper, boxes):
+        #graph (Tiles (track)), predecessors)
+        predec = [-1] * self.__area
+        initial = keeper
+        queue = [initial]
+        visited = [initial]
+        predec[initial] = initial
 
+        while queue != []:
+            v = queue[0]
+            queue = queue[1:]
+            adjs = self.__getAdjs(v,boxes)
+
+            for adj in adjs:
+                if adj not in visited:
+                    queue.append(adj)
+                    visited.append(adj)
+                    predec[adj] = v
+
+        return predec
+
+    def __getAdjs(self, tile, boxes):
+        return [t for t in self.positions_around_tile(tile) if t not in boxes and not self.is_wall(t)]
     def has_box(self, tile, state):
         """Check if tile has box."""
         return True if tile in state.boxes else False

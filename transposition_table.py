@@ -20,7 +20,7 @@ class TranspositionTable:
 
 class HashableState(State):
     def __init__(self, state):
-        super().__init__(state.keeper, state.boxes)
+        super().__init__(state.normalized_keeper, state.keeper, state.boxes)
 
     def __hash__(self):
         return TranspositionTable.zobrist_table.hash_zobrist(self)
@@ -40,7 +40,7 @@ class ZobristTable:
     def hash_zobrist(self, state):
         xor = lambda x,y: x^y
 
-        keeper = state.keeper
+        keeper = state.normalized_keeper
         boxes = state.boxes
         #print("keeper",keeper)
         #print("boxes",boxes)

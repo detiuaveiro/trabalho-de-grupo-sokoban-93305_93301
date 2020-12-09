@@ -10,9 +10,8 @@ class Agent(SearchDomain):
     #possiveis ações
 
     # actions = (box , move list)
-    def actions(self, state):
+    def actions(self, state, reachable_positions):
         
-        reachable_positions = self.__searchReachable(state)
         boxes_paths = []
         
         for box in state.boxes:
@@ -28,34 +27,32 @@ class Agent(SearchDomain):
                         path[:0] += [next_pos]
                         next_pos = reachable_positions[next_pos]
 
-                    if self.logic.tunnels != [] and box not in self.logic.goals:
-                        box_new = self.logic.new_box_position(box, pos)
-                        direction = box - pos
-                        extra_path = []
-                        # print("tunnels", self.logic.tunnels())
-                        for tunnel in self.logic.tunnels:
-                            if box_new in tunnel:
-                                extra_path = self.logic.directed_tunnel(tunnel, direction)
-                                # print("extra path", extra_path)
-                                for box_state in state.boxes:
-                                    # print("box", box)
-                                    if box_state ==  (extra_path[-1] + direction):
-                                        # print("extra path errado com a caixa", extra_path)
-                                        extra_path = extra_path[:-1]
-                                        # print("new extra path", extra_path)
+                    # if self.logic.tunnels != [] and box not in self.logic.goals:
+                    #     box_new = self.logic.new_box_position(box, pos)
+                    #     direction = box - pos
+                    #     extra_path = []
+                    #     # print("tunnels", self.logic.tunnels())
+                    #     for tunnel in self.logic.tunnels:
+                    #         if box_new in tunnel:
+                    #             extra_path = self.logic.directed_tunnel(tunnel, direction)
+                    #             # print("extra path", extra_path)
+                    #             for box_state in state.boxes:
+                    #                 # print("box", box)
+                    #                 if box_state ==  (extra_path[-1] + direction):
+                    #                     # print("extra path errado com a caixa", extra_path)
+                    #                     extra_path = extra_path[:-1]
+                    #                     # print("new extra path", extra_path)
                                     
-                            # print("extra_path", extra_path)
-                        if extra_path != []:
-                            # print("encontrou um tunel")
-                            # print("tunel", extra_path)
-                            # print("path antes", path)
-                            path.extend(extra_path)
-                            # print("path depois", path)
+                    #         # print("extra_path", extra_path)
+                    #     if extra_path != []:
+                    #         # print("encontrou um tunel")
+                    #         # print("tunel", extra_path)
+                    #         # print("path antes", path)
+                    #         path.extend(extra_path)
+                    #         # print("path depois", path)
                     
                     boxes_paths.append((box,path))
 
-        # print(boxes_paths)
-        # print("------------------------")
         return boxes_paths
     
     #consequencias da açao escolhida
@@ -65,21 +62,26 @@ class Agent(SearchDomain):
         keeper = action[1][-2]
         # print("keeper", keeper)
 
+
         box_positions = state.boxes[:]
         box_positions.remove(box)
         # print("box_positions dps do remove", box_positions)
-        if box != action[1][-1]:
-            box = action[1][-1]
+        #if box != action[1][-1]:
+        #    box = action[1][-1]
         # print("print box", box)
-        box_positions.append(self.logic.new_box_position(box, keeper))
-
+        box_positions.append(self.logic.new_box_position(box, keeper))        
+        #box is the new keeper position
+        keeper = box
         box_positions.sort()
-        # print("box postions",box_positions)
-        newstate = State(box, box_positions)
-        # print("newstate", newstate)
-        # print("---------------//----------------")
-        
-        return newstate
+
+        #find normalized keeper position
+        reacheable_positions = self.logic.reacheable_positions(keeper,box_positions)
+        normalized_position = 0
+        while reacheable_positions[normalized_position] == -1:   
+            normalized_position += 1        
+        newstate = State(normalized_position, keeper, box_positions)
+
+        return newstate, reacheable_positions
 
     #lista das caixas vs lista dos diamantes
     def satisfies(self, state_boxes, goal):
@@ -142,10 +144,10 @@ class Agent(SearchDomain):
     #     list.sort(key=lambda n : n[1])
     #     return list
     
-    # def __distance(self, p1, p2):
-        # width = self.logic.width
-        # tmp = math.fabs(p1 - p2)
-        # return tmp // width + tmp % width
+    # def __manhattan_distance(self, p1, p2):
+    #     width = self.logic.width
+    #     tmp = math.fabs(p1 - p2)
+    #     return tmp // width + tmp % width
 
     # heuristica numero 3 (em desenvolvimento)
     def heuristic(self, boxes, goals):
@@ -181,29 +183,4 @@ class Agent(SearchDomain):
         list.sort(key=lambda n : n[1])
         return list
     
-    #perform a graph search to search for reachable positions
-    #
-    #returns a list containing the predecessors of each track. If predec[track] = -1 the location is unreachable
-    def __searchReachable(self, state):
-        #graph (Tiles (track)), predecessors)
-        predec = [-1] * self.logic.area
-        initial = state.keeper
-        queue = [initial]
-        visited = [initial]
-        predec[initial] = initial
 
-        while queue != []:
-            v = queue[0]
-            queue = queue[1:]
-            adjs = self.__getAdjs(v,state)
-
-            for adj in adjs:
-                if adj not in visited:
-                    queue.append(adj)
-                    visited.append(adj)
-                    predec[adj] = v
-
-        return predec
-
-    def __getAdjs(self, tile, state):
-        return [t for t in self.logic.positions_around_tile(tile) if t not in state.boxes and not self.logic.is_wall(t)]

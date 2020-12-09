@@ -32,7 +32,7 @@ async def solver(puzzle, solution):
         map = Map(game_properties["map"])
         game = Logic(map)
         agent = Agent(game)
-        initial_state = State(game.keeper, game.boxes)
+        initial_state = State(game.keeper,game.keeper, game.boxes)
         p = SearchProblem(agent, initial_state, game.goals)
         t = SearchTree(p,'a*')
         while t.solution == None:
