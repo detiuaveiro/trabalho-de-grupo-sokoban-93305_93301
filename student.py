@@ -26,7 +26,7 @@ def get_keys(steps, width):
         key = ""
     return [key] + get_keys(steps[1:],width)
 
-async def solver(puzzle, solution):
+async def solver(puzzle, solution, steps):
     while True:
         game_properties = await puzzle.get()
         map = Map(game_properties["map"])
@@ -36,13 +36,13 @@ async def solver(puzzle, solution):
         p = SearchProblem(agent, initial_state, game.goals)
         t = SearchTree(p,'a*')
         while t.solution == None:
-            res = await t.search()
+            res = await t.search(steps)
         res = t.get_path(t.solution)
         # print("resultado", res)
         keys = get_keys(res, game.width)
         await solution.put(keys)
 
-async def agent_loop(puzzle, solution, server_address="localhost:8000", agent_name="student"):
+async def agent_loop(puzzle, solution, steps, server_address="localhost:8000", agent_name="student"):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
 
         # Receive information about static game properties
@@ -53,12 +53,18 @@ async def agent_loop(puzzle, solution, server_address="localhost:8000", agent_na
                 update = json.loads(
                     await websocket.recv()
                 )  # receive game update, this must be called timely or your game will get out of sync with the server
-
+                
                 if "map" in update:
                     # we got a new level
                     game_properties = update
                     keys = ""
                     await puzzle.put(game_properties)
+                
+                step = 0
+                if 'step' in update:
+                    #print(update["step"])
+                    step = update["step"]
+                    await steps.put(update["step"])
 
                 if not solution.empty():
                     keys = await solution.get()
@@ -86,9 +92,10 @@ NAME = os.environ.get("NAME", getpass.getuser())
 
 puzzle = asyncio.Queue(loop=loop)
 solution = asyncio.Queue(loop=loop)
+steps = asyncio.Queue(loop=loop)
 
-net_task = loop.create_task(agent_loop(puzzle, solution, f"{SERVER}:{PORT}", NAME))
-solver_task = loop.create_task(solver(puzzle, solution))
+net_task = loop.create_task(agent_loop(puzzle, solution, steps, f"{SERVER}:{PORT}", NAME))
+solver_task = loop.create_task(solver(puzzle, solution, steps))
 
 loop.run_until_complete(asyncio.gather(net_task, solver_task))
 loop.close()

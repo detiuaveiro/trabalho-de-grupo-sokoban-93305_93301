@@ -118,10 +118,16 @@ class SearchTree:
     #     return self.solution.cost
 
     # procurar a solucao
-    async def search(self, limit=None):
+    async def search(self, steps, limit=None):
         start_time = time.time()
+        step = 0
         while self.open_nodes != []:
-            await asyncio.sleep(0)  #  remover pra usar threads
+            if (not steps.empty()):
+                step = await steps.get()
+            
+            await asyncio.sleep(0)
+            
+            #await asyncio.sleep(0)  #  remover pra usar threads
             node = self.open_nodes.pop(0)
             if self.problem.goal_test(node.state):
                 self.solution = node
@@ -132,6 +138,8 @@ class SearchTree:
             #    return self.get_path(node)
             lnewnodes = []
             # print("Estamos na profundidade", node.depth)
+            if(self.strategy != 'greedy' and step >= 1000):
+                self.strategy = 'greedy'
             for a in self.problem.domain.actions(node.state, node.reacheable_positions):
                 newstate, reacheable_positions = self.problem.domain.result(node.state, a)
                 newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal), reacheable_positions)
@@ -147,13 +155,9 @@ class SearchTree:
 
     # juntar novos nos a lista de nos abertos de acordo com a estrategia
     def add_to_open(self,lnewnodes):
-        if self.strategy == 'breadth':
+        if self.strategy == 'greedy':
             self.open_nodes.extend(lnewnodes)
-        elif self.strategy == 'depth':
-            self.open_nodes[:0] = lnewnodes
-        elif self.strategy == 'uniform':
-            self.open_nodes.extend(lnewnodes)
-            self.open_nodes.sort(key=lambda n: n.cost)
+            self.open_nodes.sort(key=lambda n:n.heuristic)
         elif self.strategy == 'a*':
             self.open_nodes.extend(lnewnodes)
             self.open_nodes.sort(key=lambda n: n.cost + n.heuristic)
