@@ -151,17 +151,16 @@ class SearchTree:
             
             lnewnodes = []
             # print("Estamos na profundidade", node.depth)
-            if(self.strategy != 'greedy' and step >=1000):
+            if(self.strategy != 'greedy' and step >=1500):
                 self.strategy = 'greedy'
                 nQueue = PriorityQueue()
-                print("newQueue")
                 while not self.open_nodes.empty():
                     await asyncio.sleep(0)
                     node = self.open_nodes.get()
                     nQueue.put(SearchNodeGreedy(node.state, node.path, node.parent, node.depth, node.cost, node.heuristic, node.reacheable_positions))
 
                 self.open_nodes = nQueue
-                print("done")
+                
             for a in self.problem.domain.actions(node.state, node.reacheable_positions):
                 newstate, reacheable_positions = self.problem.domain.result(node.state, a)
                 if(self.strategy == 'greedy'):
