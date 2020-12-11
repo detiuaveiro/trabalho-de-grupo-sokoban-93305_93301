@@ -137,7 +137,6 @@ class SearchTree:
         while not self.open_nodes.empty():
             if (not steps.empty()):
                 step = await steps.get()
-            
             await asyncio.sleep(0)
             
             #await asyncio.sleep(0)  #  remover pra usar threads
