@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from state import *
 import asyncio
 from transposition_table import *
+from queue import PriorityQueue
 import time
 
 # Dominios de pesquisa
@@ -67,6 +68,7 @@ class SearchNode:
         self.heuristic = heuristic
         self.path = path
         self.reacheable_positions = reacheable_positions
+        self.priority = heuristic + cost
 
         # if SearchNode.depth_count < depth:
         #     SearchNode.depth_count = depth
@@ -87,19 +89,30 @@ class SearchNode:
         return f"no(State Keeper: {self.state.keeper}, Depth: {self.depth}, Parent: {self.parent}, Path: {self.path})"
         #return f"no(Depth: {self.depth})"
         #return "no(" + str(self.state) + "," + str(self.parent) + ")"
-
+    
+    def __lt__(self, other):
+        return self.priority < other.priority
+    
     def __repr__(self):
         return str(self)
+
+class SearchNodeGreedy(SearchNode):
+
+        def __init__(self, state, path, parent, depth, cost, heuristic, reacheable_positions): 
+            super().__init__(state, path, parent, depth, cost, heuristic, reacheable_positions)
+            self.priority = heuristic
 
 # Arvores de pesquisa
 class SearchTree:
     # construtor
     def __init__(self, problem, strategy='breadth'): 
+        self.strategy = strategy
         self.problem = problem
         root = SearchNode(problem.initial_state, None, None, 0, 0, self.problem.domain.heuristic(problem.initial_state.boxes, problem.goal),  self.problem.domain.logic.reacheable_positions(problem.initial_state.keeper, problem.initial_state.boxes))
         self.transposition_table = TranspositionTable(problem.domain.logic.area)
-        self.open_nodes = [root]
-        self.strategy = strategy
+        #self.open_nodes = [root]
+        self.open_nodes = PriorityQueue()
+        self.open_nodes.put( root )
         self.solution = None
     
     def get_path(self,node):
@@ -119,30 +132,42 @@ class SearchTree:
 
     # procurar a solucao
     async def search(self, steps, limit=None):
-        start_time = time.time()
         step = 0
-        while self.open_nodes != []:
+        count = 0
+        while not self.open_nodes.empty():
             if (not steps.empty()):
                 step = await steps.get()
             
             await asyncio.sleep(0)
             
             #await asyncio.sleep(0)  #  remover pra usar threads
-            node = self.open_nodes.pop(0)
+            #node = self.open_nodes.pop(0)
+            node = self.open_nodes.get()
+            
             if self.problem.goal_test(node.state):
                 self.solution = node
                 return self.get_path(node)
             
-            #if(time.time() - start_time > 70 ):
-            #    self.solution = node
-            #    return self.get_path(node)
+            
             lnewnodes = []
             # print("Estamos na profundidade", node.depth)
-            if(self.strategy != 'greedy' and step >= 500):
+            if(self.strategy != 'greedy' and step >=1000):
                 self.strategy = 'greedy'
+                nQueue = PriorityQueue()
+                print("newQueue")
+                while not self.open_nodes.empty():
+                    await asyncio.sleep(0)
+                    node = self.open_nodes.get()
+                    nQueue.put(SearchNodeGreedy(node.state, node.path, node.parent, node.depth, node.cost, node.heuristic, node.reacheable_positions))
+
+                self.open_nodes = nQueue
+                print("done")
             for a in self.problem.domain.actions(node.state, node.reacheable_positions):
                 newstate, reacheable_positions = self.problem.domain.result(node.state, a)
-                newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal), reacheable_positions)
+                if(self.strategy == 'greedy'):
+                    newnode = SearchNodeGreedy(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal), reacheable_positions)
+                else:
+                    newnode = SearchNode(newstate, a[1], node, node.depth + 1, node.cost + self.problem.domain.cost(node.state,a), self.problem.domain.heuristic(newstate.boxes, self.problem.goal), reacheable_positions)
                 if not self.transposition_table.in_table(newnode.state):
                     self.transposition_table.put(newnode.state)
                     lnewnodes.append(newnode)
@@ -153,11 +178,7 @@ class SearchTree:
         
         #return None
 
-    # juntar novos nos a lista de nos abertos de acordo com a estrategia
-    def add_to_open(self,lnewnodes):
-        if self.strategy == 'greedy':
-            self.open_nodes.extend(lnewnodes)
-            self.open_nodes.sort(key=lambda n:n.heuristic)
-        elif self.strategy == 'a*':
-            self.open_nodes.extend(lnewnodes)
-            self.open_nodes.sort(key=lambda n: n.cost + n.heuristic)
+    # juntar novos nos a lista de nos abertos
+    def add_to_open(self,lnewnodes):            
+        for node in lnewnodes:
+            self.open_nodes.put(node)

@@ -58,9 +58,10 @@ async def agent_loop(puzzle, solution, steps, server_address="localhost:8000", a
                     # we got a new level
                     game_properties = update
                     keys = ""
+                    while not steps.empty():
+                        await steps.get()
                     await puzzle.put(game_properties)
                 
-                step = 0
                 if 'step' in update:
                     #print(update["step"])
                     step = update["step"]
