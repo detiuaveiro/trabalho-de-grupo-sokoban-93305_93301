@@ -45,11 +45,10 @@ class SobokanSolver:
             agent = Agent(game)
             initial_state = State(game.keeper,game.keeper, game.boxes)
             p = SearchProblem(agent, initial_state, game.goals)
-            t = SearchTree(p,'a*')
+            t = SearchTree(p, A_STAR_STRATEGY)
             while t.solution == None:
                 res = await t.search(self.steps)
             res = t.get_path(t.solution)
-            # print("resultado", res)
             keys = self.get_keys(res, game.width)
             await self.solution.put(keys)
 
@@ -74,8 +73,6 @@ class SobokanSolver:
                         await self.puzzle.put(game_properties)
                     
                     if 'step' in update:
-                        #print(update["step"])
-                        step = update["step"]
                         await self.steps.put(update["step"])
 
                     if not self.solution.empty():
