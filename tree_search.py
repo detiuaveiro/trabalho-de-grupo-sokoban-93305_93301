@@ -138,7 +138,7 @@ class SearchTree:
             #    return self.get_path(node)
             lnewnodes = []
             # print("Estamos na profundidade", node.depth)
-            if(self.strategy != 'greedy' and step >= 1000):
+            if(self.strategy != 'greedy' and step >= 500):
                 self.strategy = 'greedy'
             for a in self.problem.domain.actions(node.state, node.reacheable_positions):
                 newstate, reacheable_positions = self.problem.domain.result(node.state, a)
